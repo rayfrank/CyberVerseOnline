@@ -3,7 +3,8 @@
 # Compatible with Unity 6.2.7f2
 # Source: GitHub Unity.gitignore (extended for hackathons & public repos)
 ###############################################################################
-
+# Unity recovery / backups (should never be committed)
+[Aa]ssets/_Recovery/
 # Unity generated folders
 [Ll]ibrary/
 [Tt]emp/
