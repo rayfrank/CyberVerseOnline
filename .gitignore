@@ -4,6 +4,8 @@
 # Source: GitHub Unity.gitignore (extended for hackathons & public repos)
 ###############################################################################
 # Unity recovery / backups (should never be committed)
+Assets/Vuplex/WebView/Standalone/Windows/Plugins/
+Assets/StreamingAssets/undreamai-v1.2.6-llamacpp/
 [Aa]ssets/_Recovery/
 # Unity generated folders
 [Aa]ssets/**/[Aa]uto[Ss]aves/
