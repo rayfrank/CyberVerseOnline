@@ -56,7 +56,7 @@ Learners interact with AI terminals, receive step-by-step guidance, analyze thre
 
 ## 🚀 MVP Demo
 Playable MVP hosted on GameJolt:  
-👉 https://gamejolt.com/games/CYBERVERSEKE/1032684
+👉https://gamejolt.com/games/CYBERVERSEKE/1032684 
 
 ---
 
