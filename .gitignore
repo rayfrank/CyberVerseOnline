@@ -6,6 +6,8 @@
 # Unity recovery / backups (should never be committed)
 [Aa]ssets/_Recovery/
 # Unity generated folders
+[Aa]ssets/**/[Aa]uto[Ss]aves/
+[Aa]ssets/**/[Bb]ackups/
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
