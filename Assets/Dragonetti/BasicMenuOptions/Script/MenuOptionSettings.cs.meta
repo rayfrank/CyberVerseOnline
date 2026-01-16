@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: d44af2723b451f2459349f9109369d80
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Script/MenuOptionSettings.cs
+  uploadId: 596596

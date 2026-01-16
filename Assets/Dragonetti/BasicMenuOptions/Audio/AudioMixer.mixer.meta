@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 71a3d200058d4324b83ca55c0e8066eb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Audio/AudioMixer.mixer
+  uploadId: 596596

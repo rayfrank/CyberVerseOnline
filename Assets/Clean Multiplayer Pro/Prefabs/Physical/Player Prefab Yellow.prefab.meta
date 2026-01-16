@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: aae2e3571bad4204d919b4142eb4b008
+labels:
+- FusionPrefab
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Prefabs/Physical/Player Prefab Yellow.prefab
+  uploadId: 756907

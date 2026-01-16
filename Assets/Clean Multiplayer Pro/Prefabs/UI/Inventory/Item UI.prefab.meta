@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b9a4a02eb41b8e34b8aa7afe0ef3cee6
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Prefabs/UI/Inventory/Item UI.prefab
+  uploadId: 756907

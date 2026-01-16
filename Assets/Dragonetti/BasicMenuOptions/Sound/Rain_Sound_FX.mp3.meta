@@ -1,0 +1,29 @@
+fileFormatVersion: 2
+guid: a0262058f4aff7641ae4a1ca476cc86a
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 6
+  defaultSettings:
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: 1
+    quality: 1
+    conversionMode: 0
+  platformSettingOverrides: {}
+  forceToMono: 0
+  normalize: 1
+  preloadAudioData: 1
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Sound/Rain_Sound_FX.mp3
+  uploadId: 596596

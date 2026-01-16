@@ -1,0 +1,97 @@
+[1216/120402.713:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-E1DE324514D515B84193FEBF1EE37ABD will be ignored
+[1216/120402.783:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1216/121738.676:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-3D46BF83B4A0375AEE1C8F1BE3A3F4EB will be ignored
+[1216/121738.723:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1216/124517.295:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1216/130730.216:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] ReadFile failed with error code: 109
+[1216/130817.700:ERROR:ChromiumLogFunctions.h(15)] Didn't receive a heartbeat message from the main process, so it must have died. Terminating the Vuplex WebView Chromium process...
+[1216/130817.828:ERROR:ChromiumLogFunctions.h(15)] [WindowsChromiumToPluginBridge] WriteFile failed with error code: 232
+[1216/131647.141:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-776B1EAC2E5DFA5FF74AAC70ED114394 will be ignored
+[1216/131647.242:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1216/131800.486:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-E962B1C219F5EC6445DF002FB8A7745B will be ignored
+[1216/131800.554:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[1216/133119.908:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-4C8873C16EDF90D166EE067003CACEB5 will be ignored
+[1216/133119.953:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[0124/191152.864:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-C9DBFCE6C3D42AEC520410CEECD5CDC5 will be ignored
+[0124/191152.910:WARNING:task_impl.cc(32)] No task runner for threadId 0
+[0207/090112.279:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 7-FEAF8D1F17717BA98775DB8B3A1D83D3 will be ignored
+[0207/090112.288:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/090112.288:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/090412.933:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 7-B4A9C6FB5FFA8C09F612B3407340F1A7 will be ignored
+[0207/090412.946:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/090412.946:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/090525.645:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/090525.645:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/100451.661:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-6A6C7ECA5E2C933C2BBC78216D656D9E will be ignored
+[0207/100451.669:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/100451.669:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/100620.835:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/100620.835:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/100930.157:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 6-D4C947327F2DFEDC8411FD9EF0744499 will be ignored
+[0207/100930.171:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/100930.171:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/104841.375:WARNING:backend_impl.cc(1759)] Destroying invalid entry.
+[0207/104843.684:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 8-488C4ECF4455DB420BE8DDE89ED9B3F1 will be ignored
+[0207/104843.694:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/104843.694:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111356.001:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 8-FC1F9F565395411B9C8A254F8CF9DF28 will be ignored
+[0207/111358.570:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 8-ACF2CB589C857A3B434BD0748BA57B9D will be ignored
+[0207/111401.234:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 8-A7D49C01E8E23AF4E93CC63C7B661ECA will be ignored
+[0207/111401.246:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111401.246:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111431.761:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 7-44CB57EED2A9F39D0B52FE4677A680B4 will be ignored
+[0207/111431.770:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111431.770:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111507.946:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 7-E48C99DEA30E5EC6D1A262243B06EACF will be ignored
+[0207/111507.959:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111507.959:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111656.152:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-A5A450D2E47B1E5DEDB6C4505B889E26 will be ignored
+[0207/111656.165:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-C63D41CDB50F82AAA40F5B9120BBBA54 will be ignored
+[0207/111739.388:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-4CA9927649F5EA3ED38B77C4C2C7BBE3 will be ignored
+[0207/111739.412:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-2D6649D959627F140FDCBCC9DDCD82DA will be ignored
+[0207/111739.413:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/111739.414:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[0207/115011.066:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 8-6889D8E74114BAC76ED706621B8C4D55 will be ignored
+[0207/115011.134:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115011.137:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115011.140:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115011.143:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115011.146:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115011.146:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115022.496:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 9-31860B2776ECA2C8967E61DF0C3ED69B will be ignored
+[0207/115022.557:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115022.559:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115022.560:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115022.561:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115022.562:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115022.562:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.174:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame A-A26611BC3D571B1C87B2868C90BDFAA4 will be ignored
+[0207/115055.238:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.240:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.242:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.243:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.244:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.245:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115055.246:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[0207/115141.721:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame D-D87C734ABB6CE55504E3916438386C96 will be ignored
+[1113/152702.696:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 7-2A353FC7BA54B0571D584446D2D0AD43 will be ignored
+[1113/152702.700:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[1113/152702.700:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[1113/152831.597:WARNING:angle_platform_impl.cc(49)] HLSLCompiler.cpp:250 (rx::HLSLCompiler::compileToBinary): 
+C:\fakepath(130,3-70): warning X3557: loop only executes for 1 iteration(s), forcing loop to unroll
+
+[1113/152834.544:WARNING:angle_platform_impl.cc(49)] HLSLCompiler.cpp:250 (rx::HLSLCompiler::compileToBinary): 
+C:\fakepath(139,3-70): warning X3557: loop only executes for 1 iteration(s), forcing loop to unroll
+
+[1113/152845.265:ERROR:device_event_log_impl.cc(195)] [15:28:45.265] Bluetooth: bluetooth_adapter_winrt.cc:1056 Getting Default Adapter failed.
+[1113/152858.394:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-1D8F86F56EF9B7FF2F095AFF9FAA4721 will be ignored
+[1113/152858.475:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1113/152858.477:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1113/152858.477:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1113/152858.478:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1113/152858.479:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1113/152858.479:ERROR:shared_image_manager.cc(225)] SharedImageManager::ProduceSkia: Trying to Produce a Skia representation from a non-existent mailbox.
+[1113/152858.956:ERROR:device_event_log_impl.cc(195)] [15:28:58.956] Bluetooth: bluetooth_adapter_winrt.cc:1056 Getting Default Adapter failed.
+[1113/152901.615:WARNING:frame_impl.cc(431)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-B63CE7417243C06219F223A8A4B7DFE4 will be ignored
+[1113/152901.623:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.
+[1113/152901.623:WARNING:sqlite_persistent_store_backend_base.cc(198)] Failed to post task from FlushAndNotifyInBackground@net\extras\sqlite\sqlite_persistent_store_backend_base.cc:247 to client_task_runner_.

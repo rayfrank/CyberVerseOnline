@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cc9605b0d2902a849aeab83a50df8bdd
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Characters/Prefabs/Convai NPC Mike Carter.prefab
+  uploadId: 767644

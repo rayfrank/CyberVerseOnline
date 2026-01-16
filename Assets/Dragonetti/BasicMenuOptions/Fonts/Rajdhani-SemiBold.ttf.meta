@@ -1,0 +1,30 @@
+fileFormatVersion: 2
+guid: bdaa5f4d22329ad44874cd835033c3b0
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Rajdhani SemiBold
+  fontNames:
+  - Rajdhani SemiBold
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 28b6d07166d6d8947a6671e5480cbf66, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Fonts/Rajdhani-SemiBold.ttf
+  uploadId: 596596

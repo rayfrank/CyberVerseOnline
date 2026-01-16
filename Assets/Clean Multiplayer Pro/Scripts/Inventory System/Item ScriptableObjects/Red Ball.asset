@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0302b339beb54f14e93d57e4b07eea6f, type: 3}
+  m_Name: Red Ball
+  m_EditorClassIdentifier: 
+  id: 1
+  itemName: 'Red Ball '
+  icon: {fileID: 21300000, guid: 1a49c83d73c3e5a4ab3b5eeaaaa246da, type: 3}
+  description: 
+  prefab: {fileID: -4737884841284321407, guid: f8823c4cff1b18a4ea38921064b790f0, type: 3}

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 613effe6d56c6d34c9ed63cc5b9d41ee
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Prefabs/UI/NewChatBubble.prefab
+  uploadId: 756907

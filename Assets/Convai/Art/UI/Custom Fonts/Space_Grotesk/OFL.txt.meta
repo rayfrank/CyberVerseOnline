@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 94d0515c185d6481eb4dbadb6f87f715
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Art/UI/Custom Fonts/Space_Grotesk/OFL.txt
+  uploadId: 767644

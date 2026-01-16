@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: dc9e6155cc984bbbbba406560b411797
+timeCreated: 1723619519
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Scripts/Editor/Utils/ConvaiAPIKeySetupEditor.cs
+  uploadId: 767644

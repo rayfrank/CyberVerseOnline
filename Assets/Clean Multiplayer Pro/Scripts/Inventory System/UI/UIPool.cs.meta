@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 2c3622019e29ab549aa99568f68572a9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Scripts/Inventory System/UI/UIPool.cs
+  uploadId: 756907

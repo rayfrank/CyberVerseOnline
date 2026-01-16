@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8fb86c958d628594191977beb463df4c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Art/Animations/Talking.anim
+  uploadId: 767644

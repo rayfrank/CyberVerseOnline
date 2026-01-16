@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ee7d034a751672c449ab90856e05919c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Scripts/Runtime/Addons/NotificationSystem/Scriptable Objects/No
+    Microphone Detected Notification.asset
+  uploadId: 767644

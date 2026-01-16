@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 72dcd314c28e5f547949959931648e17
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4300000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Avatars/Convai NPC Amelia/Meshes/Camila_Brow_ExtractedHairMesh0.mesh
+  uploadId: 767644

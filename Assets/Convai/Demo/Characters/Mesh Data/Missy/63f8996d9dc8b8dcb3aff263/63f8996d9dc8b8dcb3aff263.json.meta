@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0ad042d6bd4a8bd4598f050bcdc7504e
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Characters/Mesh Data/Missy/63f8996d9dc8b8dcb3aff263/63f8996d9dc8b8dcb3aff263.json
+  uploadId: 767644

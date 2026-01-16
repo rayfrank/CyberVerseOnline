@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 942560941ac5f1f49a0be7e89f8d2738
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Scripts/Setting/GameSetting.asset
+  uploadId: 756907

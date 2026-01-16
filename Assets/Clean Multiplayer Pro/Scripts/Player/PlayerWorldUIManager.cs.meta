@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: eea258726a8c8af449000d2a89b8c2d8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Scripts/Player/PlayerWorldUIManager.cs
+  uploadId: 756907

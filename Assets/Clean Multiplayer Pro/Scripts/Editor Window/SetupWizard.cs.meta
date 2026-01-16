@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: b8cedc52960a70e4bb4c514b7a434321
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Scripts/Editor Window/SetupWizard.cs
+  uploadId: 756907

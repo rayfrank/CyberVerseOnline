@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e9cbb438e07ee2c4e931d88cc70d125f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Scripts/Player/Character Selection/CharacterSO.cs
+  uploadId: 756907

@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: e2cda9532fc80f24080af314b48ac68c
+timeCreated: 1565941405
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Script/VideoSettingsMenu.cs
+  uploadId: 596596

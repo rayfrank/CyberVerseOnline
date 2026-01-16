@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b34c3da86c337d04eb1aafa9a27e8d39
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Characters/Prefabs/Convai NPC Anna Reed.prefab
+  uploadId: 767644

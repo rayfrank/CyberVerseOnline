@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 254323a92d7ed2b49b61bd25ef52ba87
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Prefabs/Physical/Network Runner.prefab
+  uploadId: 756907

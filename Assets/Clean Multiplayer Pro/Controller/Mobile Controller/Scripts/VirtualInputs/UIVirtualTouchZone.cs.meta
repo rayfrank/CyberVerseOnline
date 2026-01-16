@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 65870f34fef70aa44b0f562cfc810220
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Controller/Mobile Controller/Scripts/VirtualInputs/UIVirtualTouchZone.cs
+  uploadId: 756907

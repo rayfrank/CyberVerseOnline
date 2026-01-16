@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9cbb438e07ee2c4e931d88cc70d125f, type: 3}
+  m_Name: All Characters
+  m_EditorClassIdentifier: 
+  characters:
+  - characterName: Red
+    character: {fileID: 3077122284084202292, guid: c32845ce0a4967c4dbe4957b266814e8, type: 3}
+    displayModel: {fileID: 4040529990585756374, guid: c27de43804bf804458a5e671555f844a, type: 3}
+  - characterName: Yellow
+    character: {fileID: 3077122284084202292, guid: aae2e3571bad4204d919b4142eb4b008, type: 3}
+    displayModel: {fileID: 4040529990585756374, guid: 14cae4b77e0c48d4cb06875980331148, type: 3}
+  - characterName: Green
+    character: {fileID: 3077122284084202292, guid: d7e8da921e06d4d4aa63eaac3f86e9bf, type: 3}
+    displayModel: {fileID: 4040529990585756374, guid: e34540e6b097e044d8306f3106dfaca1, type: 3}

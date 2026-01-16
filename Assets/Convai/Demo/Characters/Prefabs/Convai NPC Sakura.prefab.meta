@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 01048887d47adbd4e997425b130d009f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Characters/Prefabs/Convai NPC Sakura.prefab
+  uploadId: 767644

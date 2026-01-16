@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ea170a0c78f447a4eb827fb12a06ab15
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Characters/Mesh Data/Steve/6642e9f6e6d7b4328f1a4bad/6642e9f6e6d7b4328f1a4bad.json
+  uploadId: 767644

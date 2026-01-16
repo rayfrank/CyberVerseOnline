@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 07d08ea5e48a0384985ac23af618b574
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2655988077585873504
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Resources/Presets/ConvaiLipSync Reallusion.preset
+  uploadId: 767644

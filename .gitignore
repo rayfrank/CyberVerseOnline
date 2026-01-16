@@ -1,0 +1,131 @@
+###############################################################################
+# UNITY PROJECT (.gitignore)
+# Compatible with Unity 6.2.7f2
+# Source: GitHub Unity.gitignore (extended for hackathons & public repos)
+###############################################################################
+# Unity recovery / backups (should never be committed)
+[Aa]ssets/_Recovery/
+# Unity generated folders
+[Aa]ssets/**/[Aa]uto[Ss]aves/
+[Aa]ssets/**/[Bb]ackups/
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+.utmp/
+
+# Unity Hub
+.UnityHub/
+
+# Crash reports
+sysinfo.txt
+mono_crash.*
+
+# Unity auto-generated meta files
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+###############################################################################
+# IDEs (Visual Studio, Rider, VS Code)
+###############################################################################
+
+# Visual Studio
+.vs/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.tmp
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+###############################################################################
+# Blender / DCC tools
+###############################################################################
+
+# Blender temp files
+*.blend1
+*.blend1.meta
+
+###############################################################################
+# Builds & exports (DO NOT COMMIT BUILDS)
+###############################################################################
+
+# Mobile builds
+*.apk
+*.aab
+
+# Desktop builds
+*.exe
+*.app
+*.dmg
+*.x86
+*.x86_64
+
+# WebGL / Custom build folders
+Builds_PC/
+Builds_WebGL/
+Builds_Mobile/
+
+# Unity packages
+*.unitypackage
+*.unitypackage.meta
+
+###############################################################################
+# Addressables (ignore build output, NOT config)
+###############################################################################
+
+/ServerData/
+/[Aa]ssets/StreamingAssets/aa*
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/Addressables_Temp*
+/[Aa]ssets/AddressableAssetsData/link.xml*
+
+###############################################################################
+# Visual Scripting (auto-generated)
+###############################################################################
+
+/[Aa]ssets/Unity.VisualScripting.Generated/
+[Aa]ssets/Unity.VisualScripting.Generated.meta
+
+###############################################################################
+# Test Runner / PlayMode generated scenes
+###############################################################################
+
+InitTestScene*.unity*
+/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+###############################################################################
+# OS junk files
+###############################################################################
+
+.DS_Store
+Thumbs.db
+
+###############################################################################
+# Logs
+###############################################################################
+
+*.log
+
+###############################################################################
+# Git LFS (IMPORTANT)
+###############################################################################
+# DO NOT IGNORE .gitattributes
+# Use Git LFS for large assets instead (videos, audio, fbx, etc.)
+###############################################################################

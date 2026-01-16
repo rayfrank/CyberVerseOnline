@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 9558bf43a7f09084ca4be4243cf51266
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 206415
+  packageName: Hacker Screen
+  packageVersion: 1.2
+  assetPath: Assets/Hacker Screen Assets/Scripts/CommandWriter.cs
+  uploadId: 556180

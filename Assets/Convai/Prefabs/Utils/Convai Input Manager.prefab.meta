@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 451807eb9a060584ea0c4d67c5d20cb9
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Prefabs/Utils/Convai Input Manager.prefab
+  uploadId: 767644

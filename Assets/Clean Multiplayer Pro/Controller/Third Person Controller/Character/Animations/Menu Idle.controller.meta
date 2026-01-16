@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e960c5b5db635ba41a9cc5d5f18a62ea
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Controller/Third Person Controller/Character/Animations/Menu
+    Idle.controller
+  uploadId: 756907

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 0e7ad2d870136a34682b7cbe9d416235
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Avatars/Convai NPC Amelia/Shaders/RL_EyeShaderParallax_Dummy_3D.shader
+  uploadId: 767644

@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 5c55497a6b0b69f4cb4d14c811c664c5
+timeCreated: 1565937768
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Script/AudioSettingsMenu.cs
+  uploadId: 596596

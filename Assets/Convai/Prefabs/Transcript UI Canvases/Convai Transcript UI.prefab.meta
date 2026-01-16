@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d8fa7782ef3655b4b89ceecf9beef9d0
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Prefabs/Transcript UI Canvases/Convai Transcript UI.prefab
+  uploadId: 767644

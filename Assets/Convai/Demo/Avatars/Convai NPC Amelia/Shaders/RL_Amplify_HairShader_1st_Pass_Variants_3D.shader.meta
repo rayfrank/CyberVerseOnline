@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 6456e933f2d0a4c47aa4638862e567b5
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Avatars/Convai NPC Amelia/Shaders/RL_Amplify_HairShader_1st_Pass_Variants_3D.shader
+  uploadId: 767644

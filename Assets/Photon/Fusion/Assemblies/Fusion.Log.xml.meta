@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: cd3233dc099b4664294b1ef901623456
+labels:
+- FusionCodeDoc
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 267958
+  packageName: Photon Fusion
+  packageVersion: 2.0.8
+  assetPath: Assets/Photon/Fusion/Assemblies/Fusion.Log.xml
+  uploadId: 807342

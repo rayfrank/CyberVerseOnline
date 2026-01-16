@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 12ffe95c089f7a242868b6261467e343
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 238520
+  packageName: Basic Menu Options
+  packageVersion: 1.0
+  assetPath: Assets/Dragonetti/BasicMenuOptions/Prefabs/OptionsMenu.prefab
+  uploadId: 596596

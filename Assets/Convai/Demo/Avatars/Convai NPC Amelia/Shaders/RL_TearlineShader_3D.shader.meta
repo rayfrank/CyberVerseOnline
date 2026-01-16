@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 38a975f9b5c02af409375eea6afd1f9d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Avatars/Convai NPC Amelia/Shaders/RL_TearlineShader_3D.shader
+  uploadId: 767644

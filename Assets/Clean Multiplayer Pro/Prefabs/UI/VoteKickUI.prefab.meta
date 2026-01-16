@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 68becc8c8e0ca964bbac483d22f97beb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Prefabs/UI/VoteKickUI.prefab
+  uploadId: 756907

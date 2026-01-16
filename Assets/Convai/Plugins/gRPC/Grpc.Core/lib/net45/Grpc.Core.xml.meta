@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ec9cf7702008ac648af0687c05064f78
+timeCreated: 1531219386
+licenseType: Store
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Plugins/gRPC/Grpc.Core/lib/net45/Grpc.Core.xml
+  uploadId: 767644

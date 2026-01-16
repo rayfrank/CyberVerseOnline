@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 2c5289bfc72186f40b90ff7b9d45894a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Scripts/Runtime/Addons/NotificationSystem/NotificationSystemActiveStatusHandler.cs
+  uploadId: 767644

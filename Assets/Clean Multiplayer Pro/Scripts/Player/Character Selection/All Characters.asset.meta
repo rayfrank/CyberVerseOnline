@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 13ec98ef0c510f044b50f42e751d5e9f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 264984
+  packageName: Clean Multiplayer Pro
+  packageVersion: 2.0.1
+  assetPath: Assets/Clean Multiplayer Pro/Scripts/Player/Character Selection/All
+    Characters.asset
+  uploadId: 756907

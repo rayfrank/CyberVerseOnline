@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 6c1403fe2d584d4abbb9e6588b8035f7
+timeCreated: 1712719388
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Scripts/Runtime/Features/NPC2NPC/Speech Bubble System/ISpeechBubbleDisplay.cs
+  uploadId: 767644

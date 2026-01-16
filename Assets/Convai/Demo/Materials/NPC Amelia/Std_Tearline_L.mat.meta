@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2c1269a2f3e40e943a9be4507b0a4756
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 235621
+  packageName: NPC AI Engine - Dialog, actions, voice and lipsync - Convai
+  packageVersion: 3.3.0
+  assetPath: Assets/Convai/Demo/Materials/NPC Amelia/Std_Tearline_L.mat
+  uploadId: 767644
