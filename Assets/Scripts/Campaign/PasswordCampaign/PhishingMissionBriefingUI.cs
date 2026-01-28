@@ -7,22 +7,30 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 /// <summary>
-/// Permanent monitor UI (Windows-like) built in EDIT MODE and PLAY MODE.
-/// - Uses [ExecuteAlways] so it exists even after you stop Play.
-/// - Rebuilds only when missing (or when you click Rebuild in inspector).
-/// Attach to an empty GameObject near/parented to the Monitor.
+/// eCitizen Kenyanized phishing + password safety lesson UI (Permanent, world-space).
+/// Flow:
+/// Home -> Official Login -> Dashboard -> Mail (Inbox) -> (Report/Delete OR Click Verify) -> Browser -> Outcome -> Result.
+/// Includes:
+/// - hints for right/wrong
+/// - reward score for good behavior (with HUD UI)
+/// - BIG animated red alert overlay if hacked
+/// - end screen explains WHAT YOU DID WRONG + WHAT TO DO NEXT
 /// </summary>
 [ExecuteAlways]
 public class PhishingMissionMonitorUI : MonoBehaviour
 {
     [Header("World-space placement")]
-    public Transform targetSurface;              // monitor plane transform
-    public Vector2 canvasSizeMeters = new Vector2(0.62f, 0.36f);
+    public Transform targetSurface;
+    public Vector2 canvasSizeMeters = new Vector2(0.70f, 0.40f);
     public float surfaceOffset = 0.002f;
     [Range(200, 2500)] public int pixelsPerUnit = 1200;
     public Camera uiCamera;
@@ -31,28 +39,23 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     public bool autoRebuild = true;
     public string rootName = "MonitorUI_ROOT";
 
-    [Header("Window layout (DO NOT change if you already positioned your UI)")]
-    public Vector2 accountWindowPos = new Vector2(120, -80);
-    public Vector2 accountWindowSize = new Vector2(900, 620);
+    [Header("Layout")]
+    public Vector2 homeWindowPos = new Vector2(40, -40);
+    public Vector2 homeWindowSize = new Vector2(1200, 720);
 
-    public Vector2 dashboardWindowPos = new Vector2(120, -80);
-    public Vector2 dashboardWindowSize = new Vector2(1060, 680);
+    public Vector2 dashboardWindowPos = new Vector2(60, -60);
+    public Vector2 dashboardWindowSize = new Vector2(1180, 700);
 
     public Vector2 mailWindowPos = new Vector2(70, -60);
-    public Vector2 mailWindowSize = new Vector2(1060, 680);
+    public Vector2 mailWindowSize = new Vector2(1180, 700);
 
-    public Vector2 browserWindowPos = new Vector2(120, -90);
-    public Vector2 browserWindowSize = new Vector2(1040, 660);
+    public Vector2 browserWindowPos = new Vector2(80, -80);
+    public Vector2 browserWindowSize = new Vector2(1140, 690);
 
     public Vector2 resultWindowPos = new Vector2(220, -140);
-    public Vector2 resultWindowSize = new Vector2(860, 520);
+    public Vector2 resultWindowSize = new Vector2(900, 560);
 
-    [Header("Mission tuning (baseline risk if you never click link)")]
-    [Range(0, 100)] public int hackChanceIfWeak = 80;
-    [Range(0, 100)] public int hackChanceIfMedium = 35;
-    [Range(0, 100)] public int hackChanceIfStrong = 8;
-
-    [Header("Mission tuning (risk if you click link + submit password)")]
+    [Header("Security Simulation (risk if you enter password on suspicious page)")]
     [Range(0, 100)] public int phishHackChanceWeak = 95;
     [Range(0, 100)] public int phishHackChanceMedium = 70;
     [Range(0, 100)] public int phishHackChanceStrong = 25;
@@ -66,103 +69,151 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     public float hintPulseSpeed = 2.0f;
     public Color hintGlowColor = new Color32(0, 220, 255, 255);
 
-    [Header("Suspicious domain highlight")]
-    public string suspiciousDomain = "verify.kca-security.com";
-    public string typosquatHint = "kca-security"; // the part to highlight
+    [Header("Domains (Kenyanized)")]
+    public string officialDomain = "accounts.ecitizen.go.ke";
+    public string suspiciousDomain = "ecitizen-verify.go-ke.com";
+    public string typosquatHint = "go-ke";
     public float domainFlashSpeed = 2.5f;
+
+    [Header("Hacked Alert (BIG & LOUD UI)")]
+    public float hackedFlashSpeed = 3.0f; // red flash speed
+    public Color hackedFlashColor = new Color32(220, 30, 30, 140);
+    public float hackedShakeAmount = 6f;
+    public float hackedShakeSpeed = 18f;
+    public float hackedPulseSpeed = 2.2f;
+
+    [Header("Reward HUD")]
+    public bool showRewardHUD = true;
+    public float toastDuration = 2.0f;
 
     // ---------- internal ----------
     private Canvas canvas;
     private RectTransform root;
+    private RectTransform desktop;
 
-    private enum MissionState { CreateAccount, Dashboard, Mail, Browser, Result }
-    private MissionState state;
+    private enum AppState { Home, BrowserOfficialLogin, Dashboard, Mail, BrowserPhishVerify, Result }
+    private AppState state;
 
-    private string chosenUsername = "student@cyberverse.local";
+    // “Account”
+    private string citizenIdOrEmail = "citizen@ecitizen.local";
     private string chosenPassword = "";
     private PasswordGrade chosenGrade = PasswordGrade.Unknown;
 
-    private bool openedMailOnce = false;
-    private bool clickedVerify = false;
+    // Lesson flags
+    private bool loggedIn = false;
+    private bool openedInbox = false;
+    private bool clickedSuspiciousVerify = false;
     private bool submittedOnPhishPage = false;
+    private bool reportedEmail = false;
+    private bool deletedEmail = false;
+    private bool hacked = false;
 
-    private RectTransform desktop;
+    // Rewards
+    private int score = 0;
+    private string lastScoreReason = "";
+    private int lastScoreDelta = 0;
+    private float lastScoreTime = -999f;
 
-    private RectTransform accountWindow;
+    // WINDOWS
+    private RectTransform homeWindow;
     private RectTransform dashboardWindow;
     private RectTransform mailWindow;
     private RectTransform browserWindow;
     private RectTransform resultWindow;
 
-    // Account refs
-    private TMP_InputField usernameInput;
-    private TMP_InputField passwordInput;
-    private TMP_Text strengthLabel;
-    private TMP_Text strengthHint;
-    private Image strengthBarFill;
-    private TMP_Text accountError;
+    // HACK overlay + BIG ALERT
+    private RectTransform hackedOverlay;
+    private Image hackedOverlayImage;
 
-    // Dashboard refs
-    private TMP_Text dashWelcome;
-    private TMP_Text dashTaskText;
+    private RectTransform hackedBigPanel;
+    private TMP_Text hackedBigTitle;
+    private TMP_Text hackedBigBody;
+    private RectTransform hackedSirenLeft;
+    private RectTransform hackedSirenRight;
 
-    // Mail refs
-    private TMP_Text mailBodyText;
-    private TMP_Text mailSenderLine;
+    private Coroutine hackedFlashRoutine;
+
+    // REWARD HUD (always visible)
+    private RectTransform hudRoot;
+    private TMP_Text hudScore;
+    private TMP_Text hudBadge;
+    private TMP_Text hudToast;
+    private Image hudToastBg;
+
+    // HOME refs
+    private TMP_InputField homeSearchField;
+    private TMP_Text homeWelcomeLine;
+    private Button btnHomeSignIn;
+    private Button btnHomeRegister;
+
+    // DASH refs
+    private TMP_Text dashTitle;
+    private TMP_Text dashSub;
+    private TMP_Text dashHint;
+    private RectTransform dashAlertBanner;
+    private TMP_Text dashAlertText;
+
+    private Button btnDashOpenInbox;
+    private Button btnDashLogout;
+    private Button btnDashBackHome;
+
+    // MAIL refs
+    private TMP_Text mailTitleLine;
+    private TMP_Text mailFromLine;
     private TMP_Text mailSubjectLine;
+    private TMP_Text mailBodyText;
+    private TMP_Text mailHintBox;
 
-    // Browser refs
+    private Button btnMailBack;
+    private Button btnMailReport;
+    private Button btnMailDelete;
+    private Button btnMailVerify; // suspicious link
+    private Button btnMailOpenItem;
+
+    // BROWSER refs
     private TMP_Text browserStatus;
     private TMP_Text browserSecureLabel;
     private Image browserSecureDot;
+    private TMP_Text browserUrlText;
 
     private RectTransform browserPageRoot;
     private RectTransform browserSuccessRoot;
 
+    private TMP_InputField browserUserField;
     private TMP_InputField browserPassField;
     private TMP_Text browserError;
-    private TMP_Text browserUrlText;
+    private TMP_Text browserPageTitle;
+    private TMP_Text browserPageSub;
+    private TMP_Text browserHintBox;
 
-    // Buttons
-    private Button btnContinue;
-    private Button btnReset;
-
-    private Button btnEmailIcon;
-    private Button btnProfileIcon;
-    private Button btnTipsIcon;
-
-    private Button btnMailBack;
-    private Button btnReport;
-    private Button btnDelete;
-    private Button btnVerifyButton;
-
-    private Button btnBrowserSubmit;
     private Button btnBrowserBack;
+    private Button btnBrowserSubmit;
 
+    // RESULT refs
     private Button btnResultRetry;
     private Button btnResultClose;
 
-    // Hint target tracking
-    private enum HintTarget { None, Continue, EmailIcon, VerifyButton, BrowserSubmit }
+    // Hint targets
+    private enum HintTarget { None, HomeSignIn, DashInbox, MailSafeAction, MailVerify, BrowserSubmit }
     private HintTarget currentHint = HintTarget.None;
 
-    // Hint outlines for pulsing glow
     private readonly Dictionary<Button, Outline> hintOutlines = new();
 
-    // palette (same family as your design)
-    private readonly Color colDesktop = new Color32(14, 26, 44, 255);
-    private readonly Color colWindow = new Color32(240, 243, 247, 255);
-    private readonly Color colBorder = new Color32(210, 214, 220, 255);
-    private readonly Color colText = new Color32(28, 30, 33, 255);
-    private readonly Color colMuted = new Color32(98, 104, 112, 255);
+    // Palette
+    private readonly Color colDesktop = new Color32(245, 247, 250, 255);
+    private readonly Color colWindow = new Color32(255, 255, 255, 255);
+    private readonly Color colBorder = new Color32(220, 225, 232, 255);
+    private readonly Color colText = new Color32(24, 28, 33, 255);
+    private readonly Color colMuted = new Color32(90, 98, 108, 255);
 
     private readonly Color colDanger = new Color32(204, 46, 46, 255);
     private readonly Color colGood = new Color32(30, 148, 77, 255);
     private readonly Color colWarn = new Color32(227, 149, 0, 255);
 
-    private readonly Color colPrimary = new Color32(19, 110, 192, 255);
-    private readonly Color colLink = new Color32(11, 88, 171, 255);
-    private readonly Color colLinkHover = new Color32(0, 130, 255, 255);
+    private readonly Color colPrimary = new Color32(0, 140, 70, 255);
+    private readonly Color colAccent = new Color32(0, 120, 205, 255);
+    private readonly Color colLink = new Color32(0, 120, 205, 255);
+    private readonly Color colLinkHover = new Color32(0, 160, 255, 255);
 
     private enum PasswordGrade { Unknown, Weak, Medium, Strong }
 
@@ -171,35 +222,38 @@ public class PhishingMissionMonitorUI : MonoBehaviour
         EnsureEventSystem();
         EnsureUICamera();
 
-        if (autoRebuild)
-            BuildIfMissing();
+        if (autoRebuild) BuildIfMissing();
 
         ApplyPlacement();
         CacheAndWire();
         RefreshHintState();
+        ApplyHackedUI();
+        RefreshRewardHUD();
     }
 
     void OnValidate()
     {
         if (!enabled) return;
 
-        if (autoRebuild)
-            BuildIfMissing();
+        if (autoRebuild) BuildIfMissing();
 
         ApplyPlacement();
         CacheAndWire();
+        ApplyHackedUI();
+        RefreshRewardHUD();
     }
 
     void Update()
     {
         ApplyPlacement();
 
-        // Only pulse in play mode
         if (Application.isPlaying)
         {
             PulseHintGlows();
             RefreshHintState();
             AnimateSuspiciousDomainFlash();
+            AnimateHackedBigAlert();
+            AnimateRewardToast();
         }
     }
 
@@ -213,19 +267,15 @@ public class PhishingMissionMonitorUI : MonoBehaviour
         ApplyPlacement();
         CacheAndWire();
         RefreshHintState();
+        ApplyHackedUI();
+        RefreshRewardHUD();
     }
 
     void BuildIfMissing()
     {
         var existing = transform.Find(rootName);
-        if (!existing)
-        {
-            BuildAll();
-        }
-        else
-        {
-            CacheRefs(existing);
-        }
+        if (!existing) BuildAll();
+        else CacheRefs(existing);
     }
 
     void CacheRefs(Transform existingRoot)
@@ -237,73 +287,112 @@ public class PhishingMissionMonitorUI : MonoBehaviour
         desktop = existingRoot.Find("Desktop")?.GetComponent<RectTransform>();
         if (!desktop) return;
 
-        accountWindow = desktop.Find("AccountWindow")?.GetComponent<RectTransform>();
+        homeWindow = desktop.Find("HomeWindow")?.GetComponent<RectTransform>();
         dashboardWindow = desktop.Find("DashboardWindow")?.GetComponent<RectTransform>();
         mailWindow = desktop.Find("MailWindow")?.GetComponent<RectTransform>();
         browserWindow = desktop.Find("BrowserWindow")?.GetComponent<RectTransform>();
         resultWindow = desktop.Find("ResultWindow")?.GetComponent<RectTransform>();
 
-        // Account
-        if (accountWindow)
+        // HUD
+        hudRoot = desktop.Find("RewardHUD")?.GetComponent<RectTransform>();
+        if (hudRoot)
         {
-            var body = accountWindow.Find("Body");
-            usernameInput = body?.Find("UsernameField")?.GetComponent<TMP_InputField>();
-            passwordInput = body?.Find("PasswordField")?.GetComponent<TMP_InputField>();
-            accountError = body?.Find("Error")?.GetComponent<TMP_Text>();
-
-            var strengthRow = body?.Find("StrengthRow");
-            strengthLabel = strengthRow?.Find("StrengthLabel")?.GetComponent<TMP_Text>();
-            strengthHint = strengthRow?.Find("StrengthHint")?.GetComponent<TMP_Text>();
-            var barBg = strengthRow?.Find("StrengthBarBG");
-            strengthBarFill = barBg?.Find("Fill")?.GetComponent<Image>();
-
-            if (passwordInput != null)
-            {
-                passwordInput.onValueChanged.RemoveListener(OnPasswordChanged);
-                passwordInput.onValueChanged.AddListener(OnPasswordChanged);
-            }
+            hudScore = hudRoot.Find("Score")?.GetComponent<TextMeshProUGUI>();
+            hudBadge = hudRoot.Find("Badge")?.GetComponent<TextMeshProUGUI>();
+            hudToast = hudRoot.Find("Toast/ToastText")?.GetComponent<TextMeshProUGUI>();
+            var toastBgRT = hudRoot.Find("Toast")?.GetComponent<RectTransform>();
+            hudToastBg = toastBgRT ? toastBgRT.GetComponent<Image>() : null;
         }
 
-        // Dashboard
+        hackedOverlay = desktop.Find("HackedOverlay")?.GetComponent<RectTransform>();
+        hackedOverlayImage = hackedOverlay ? hackedOverlay.GetComponent<Image>() : null;
+
+        hackedBigPanel = desktop.Find("HackedBIG")?.GetComponent<RectTransform>();
+        if (hackedBigPanel)
+        {
+            hackedBigTitle = hackedBigPanel.Find("Title")?.GetComponent<TextMeshProUGUI>();
+            hackedBigBody = hackedBigPanel.Find("Body")?.GetComponent<TextMeshProUGUI>();
+            hackedSirenLeft = hackedBigPanel.Find("SirenLeft")?.GetComponent<RectTransform>();
+            hackedSirenRight = hackedBigPanel.Find("SirenRight")?.GetComponent<RectTransform>();
+        }
+
+        // HOME
+        if (homeWindow)
+        {
+            var body = homeWindow.Find("Body")?.GetComponent<RectTransform>();
+            homeWelcomeLine = body?.Find("Hero/Welcome")?.GetComponent<TextMeshProUGUI>();
+            homeSearchField = body?.Find("Hero/SearchField")?.GetComponent<TMP_InputField>();
+            btnHomeSignIn = FindButton(homeWindow, "SignInBtn");
+            btnHomeRegister = FindButton(homeWindow, "RegisterBtn");
+        }
+
+        // DASH
         if (dashboardWindow)
         {
-            var body = dashboardWindow.Find("Body");
-            dashWelcome = body?.Find("HeroCard/Welcome")?.GetComponent<TMP_Text>();
-            dashTaskText = body?.Find("HeroCard/HintLine")?.GetComponent<TMP_Text>();
+            var body = dashboardWindow.Find("Body")?.GetComponent<RectTransform>();
+            dashTitle = body?.Find("Top/Title")?.GetComponent<TextMeshProUGUI>();
+            dashSub = body?.Find("Top/Sub")?.GetComponent<TextMeshProUGUI>();
+            dashHint = body?.Find("HintCard/HintText")?.GetComponent<TextMeshProUGUI>();
+
+            dashAlertBanner = body?.Find("AlertBanner")?.GetComponent<RectTransform>();
+            dashAlertText = dashAlertBanner?.Find("Text")?.GetComponent<TextMeshProUGUI>();
+
+            btnDashOpenInbox = FindButton(dashboardWindow, "InboxBtn");
+            btnDashLogout = FindButton(dashboardWindow, "LogoutBtn");
+            btnDashBackHome = FindButton(dashboardWindow, "BackHomeBtn");
         }
 
-        // Mail
+        // MAIL
         if (mailWindow)
         {
-            var body = mailWindow.Find("Body");
-            var right = body?.Find("RightPane");
-            var scroll = right?.Find("MailScroll");
-            var content = scroll?.Find("Content");
-            mailBodyText = content?.Find("MailBody")?.GetComponent<TMP_Text>();
+            var body = mailWindow.Find("Body")?.GetComponent<RectTransform>();
+            mailTitleLine = body?.Find("RightPane/MailHeader/Title")?.GetComponent<TextMeshProUGUI>();
+            mailFromLine = body?.Find("RightPane/MailHeader/From")?.GetComponent<TextMeshProUGUI>();
+            mailSubjectLine = body?.Find("RightPane/MailHeader/Subject")?.GetComponent<TextMeshProUGUI>();
+            mailBodyText = body?.Find("RightPane/MailBody")?.GetComponent<TextMeshProUGUI>();
+            mailHintBox = body?.Find("RightPane/HintBox/HintText")?.GetComponent<TextMeshProUGUI>();
 
-            mailSenderLine = content?.Find("Header/Sender")?.GetComponent<TMP_Text>();
-            mailSubjectLine = content?.Find("Header/Subject")?.GetComponent<TMP_Text>();
+            btnMailBack = FindButton(mailWindow, "BackBtn");
+            btnMailReport = FindButton(mailWindow, "ReportBtn");
+            btnMailDelete = FindButton(mailWindow, "DeleteBtn");
+            btnMailVerify = FindButton(mailWindow, "VerifyBtn");
+            btnMailOpenItem = FindButton(mailWindow, "OpenMailItemBtn");
         }
 
-        // Browser
+        // BROWSER
         if (browserWindow)
         {
-            var body = browserWindow.Find("Body");
-            browserStatus = body?.Find("TopBar/Status")?.GetComponent<TMP_Text>();
-            browserSecureLabel = body?.Find("TopBar/SecureLabel")?.GetComponent<TMP_Text>();
+            var body = browserWindow.Find("Body")?.GetComponent<RectTransform>();
+
+            browserStatus = body?.Find("TopBar/Status")?.GetComponent<TextMeshProUGUI>();
+            browserSecureLabel = body?.Find("TopBar/SecureLabel")?.GetComponent<TextMeshProUGUI>();
             browserSecureDot = body?.Find("TopBar/SecureDot")?.GetComponent<Image>();
-            browserUrlText = body?.Find("TopBar/UrlText")?.GetComponent<TMP_Text>();
+            browserUrlText = body?.Find("TopBar/UrlText")?.GetComponent<TextMeshProUGUI>();
 
             browserPageRoot = body?.Find("Page")?.GetComponent<RectTransform>();
             browserSuccessRoot = body?.Find("Success")?.GetComponent<RectTransform>();
 
+            browserUserField = browserPageRoot?.Find("UserField")?.GetComponent<TMP_InputField>();
             browserPassField = browserPageRoot?.Find("PasswordField")?.GetComponent<TMP_InputField>();
-            browserError = browserPageRoot?.Find("Error")?.GetComponent<TMP_Text>();
+            browserError = browserPageRoot?.Find("Error")?.GetComponent<TextMeshProUGUI>();
+            browserPageTitle = browserPageRoot?.Find("PageTitle")?.GetComponent<TextMeshProUGUI>();
+            browserPageSub = browserPageRoot?.Find("PageSub")?.GetComponent<TextMeshProUGUI>();
+            browserHintBox = browserPageRoot?.Find("HintBox/HintText")?.GetComponent<TextMeshProUGUI>();
+
+            btnBrowserBack = FindButton(browserWindow, "BackBtn");
+            btnBrowserSubmit = FindButton(browserWindow, "SubmitBtn");
+        }
+
+        // RESULT
+        if (resultWindow)
+        {
+            btnResultRetry = FindButton(resultWindow, "RetryBtn");
+            btnResultClose = FindButton(resultWindow, "CloseBtn");
         }
     }
 
     // =========================
-    // Placement (unchanged)
+    // Placement
     // =========================
     void ApplyPlacement()
     {
@@ -323,14 +412,17 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     {
         BuildCanvas();
         BuildDesktop();
+        BuildRewardHUD();
+        BuildHackedOverlay();
+        BuildHackedBIG();
 
-        BuildAccountWindow();
+        BuildHomeWindow();
         BuildDashboardWindow();
         BuildMailWindow();
         BuildBrowserWindow();
         BuildResultWindow();
 
-        SwitchState(MissionState.CreateAccount);
+        SwitchState(AppState.Home);
     }
 
     void BuildCanvas()
@@ -351,207 +443,289 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     void BuildDesktop()
     {
         desktop = UI.Panel(root, "Desktop", colDesktop, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-        UI.Panel(desktop, "DesktopOverlay", new Color32(255, 255, 255, 16), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
     }
 
-    void BuildAccountWindow()
+    void BuildRewardHUD()
     {
-        accountWindow = UI.Window(desktop, "AccountWindow", "Account Setup",
-            accountWindowPos, accountWindowSize, colWindow, colBorder, colText,
+        hudRoot = UI.Panel(desktop, "RewardHUD", new Color32(0, 0, 0, 0),
+            new Vector2(0, 0), new Vector2(1, 1), Vector2.zero, Vector2.zero);
+
+        // Container top-right
+        var box = UI.Panel(hudRoot, "HUDBox", new Color32(255, 255, 255, 230),
+            new Vector2(1, 1), new Vector2(1, 1), new Vector2(-320, -14), new Vector2(-14, -104));
+        UI.AddSoftOutline(box.gameObject, new Color32(215, 222, 232, 255), 2);
+
+        hudScore = UI.Text(box, "Score", "Score: 0", 18, colText,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(12, 44), new Vector2(-12, -12),
+            TextAlignmentOptions.TopLeft);
+
+        hudBadge = UI.Text(box, "Badge", "Badge: —", 16, colMuted,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(12, 14), new Vector2(-12, -36),
+            TextAlignmentOptions.TopLeft);
+
+        // Toast (under HUDBox)
+        var toast = UI.Panel(hudRoot, "Toast", new Color32(0, 0, 0, 0),
+            new Vector2(1, 1), new Vector2(1, 1), new Vector2(-520, -110), new Vector2(-14, -170));
+        hudToastBg = toast.GetComponent<Image>();
+        hudToastBg.color = new Color32(0, 120, 205, 0);
+        UI.AddSoftOutline(toast.gameObject, new Color32(0, 0, 0, 0), 0);
+
+        hudToast = UI.Text(toast, "ToastText", "", 16, Color.white,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(14, 8), new Vector2(-14, -8),
+            TextAlignmentOptions.MidlineLeft);
+        hudToast.enableWordWrapping = true;
+
+        toast.gameObject.SetActive(false);
+    }
+
+    void BuildHackedOverlay()
+    {
+        hackedOverlay = UI.Panel(desktop, "HackedOverlay", new Color32(0, 0, 0, 0),
+            Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+        hackedOverlayImage = hackedOverlay.GetComponent<Image>();
+        hackedOverlayImage.raycastTarget = false;
+        hackedOverlay.gameObject.SetActive(false);
+    }
+
+    void BuildHackedBIG()
+    {
+        // Huge alert card in the center of the monitor
+        hackedBigPanel = UI.Panel(desktop, "HackedBIG", new Color32(20, 20, 22, 245),
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+            new Vector2(-520, -220), new Vector2(520, 220));
+        UI.AddSoftOutline(hackedBigPanel.gameObject, new Color32(255, 90, 90, 255), 4);
+
+        // Siren bars
+        hackedSirenLeft = UI.Panel(hackedBigPanel, "SirenLeft", new Color32(220, 30, 30, 220),
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(30, 0));
+        hackedSirenRight = UI.Panel(hackedBigPanel, "SirenRight", new Color32(220, 30, 30, 220),
+            new Vector2(1, 0), new Vector2(1, 1), new Vector2(-30, 0), new Vector2(0, 0));
+
+        hackedBigTitle = UI.Text(hackedBigPanel, "Title", "⚠️  ACCOUNT COMPROMISED  ⚠️", 44, new Color32(255, 80, 80, 255),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(24, -20), new Vector2(-24, -96),
+            TextAlignmentOptions.TopLeft);
+        hackedBigTitle.enableWordWrapping = true;
+
+        hackedBigBody = UI.Text(hackedBigPanel, "Body",
+            "YOU ENTERED YOUR PASSWORD ON A FAKE PAGE.\n\n" +
+            "ACTION REQUIRED:\n" +
+            "• Change password NOW\n" +
+            "• Enable 2FA/MFA\n" +
+            "• Report the email\n" +
+            "• Type the official URL yourself",
+            22, new Color32(255, 240, 240, 255),
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(24, 24), new Vector2(-24, -106),
+            TextAlignmentOptions.TopLeft);
+        hackedBigBody.enableWordWrapping = true;
+
+        hackedBigPanel.gameObject.SetActive(false);
+    }
+
+    // -------------------- WINDOWS BUILD (your original) --------------------
+    void BuildHomeWindow()
+    {
+        homeWindow = UI.Window(desktop, "HomeWindow", "eCitizen",
+            homeWindowPos, homeWindowSize, colWindow, colBorder, colText,
             onClose: () => { });
 
-        var body = accountWindow.Find("Body").GetComponent<RectTransform>();
+        var body = homeWindow.Find("Body").GetComponent<RectTransform>();
 
-        UI.Text(body, "Title", "Create your in-game account", 30, colText,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -26), new Vector2(-28, -80),
-            TextAlignmentOptions.TopLeft);
+        var header = UI.Panel(body, "Header", Color.white,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -78), new Vector2(0, 0));
+        UI.Image(header, "BottomBorder", colBorder, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1));
 
-        UI.Text(body, "Sub", "Use a strong password. Weak passwords can be cracked.", 18, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -78), new Vector2(-28, -116),
-            TextAlignmentOptions.TopLeft);
+        var crest = UI.Panel(header, "Crest", new Color32(0, 0, 0, 0),
+            new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, -22), new Vector2(58, 22));
+        UI.Text(crest, "CrestTxt", "KE", 18, colPrimary, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, TextAlignmentOptions.Center);
 
-        UI.Text(body, "UserLabel", "Username", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -140), new Vector2(-28, -175),
-            TextAlignmentOptions.TopLeft);
-
-        usernameInput = UI.Input(body, "UsernameField", "student@cyberverse.local", 18,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -180), new Vector2(-28, -240));
-
-        UI.Text(body, "PassLabel", "Password", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -260), new Vector2(-28, -295),
-            TextAlignmentOptions.TopLeft);
-
-        passwordInput = UI.Input(body, "PasswordField", "Enter password…", 18,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -300), new Vector2(-28, -360),
-            isPassword: true);
-
-        var strengthRow = UI.Panel(body, "StrengthRow", new Color32(0, 0, 0, 0),
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -372), new Vector2(-28, -430));
-
-        strengthLabel = UI.Text(strengthRow, "StrengthLabel", "Strength: —", 18, colMuted,
-            new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(260, 0),
+        UI.Text(header, "Brand", "eCitizen", 28, colText,
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(68, 10), new Vector2(240, -10),
             TextAlignmentOptions.MidlineLeft);
 
-        var barBg = UI.Panel(strengthRow, "StrengthBarBG", new Color32(225, 228, 234, 255),
-            new Vector2(0, 0.25f), new Vector2(1, 0.75f), new Vector2(260, 8), new Vector2(-120, -8));
-        barBg.GetComponent<Image>().raycastTarget = false;
+        UI.Text(header, "Nav", "Home   •   National   •   Counties   •   Help & Support", 16, colMuted,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(240, 10), new Vector2(-320, -10),
+            TextAlignmentOptions.MidlineLeft);
 
-        strengthBarFill = UI.Image(barBg, "Fill", colWarn,
-            new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(0, 0));
-        strengthBarFill.raycastTarget = false;
-
-        strengthHint = UI.Text(strengthRow, "StrengthHint", "Tip: 12+ chars, mix UPPER/lower/numbers/symbols", 16, colMuted,
-            new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, -28), new Vector2(0, 0),
-            TextAlignmentOptions.TopLeft);
-
-        accountError = UI.Text(body, "Error", "", 16, colDanger,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(28, -432), new Vector2(-28, -470),
-            TextAlignmentOptions.TopLeft);
-        accountError.gameObject.SetActive(false);
-
-        passwordInput.onValueChanged.RemoveListener(OnPasswordChanged);
-        passwordInput.onValueChanged.AddListener(OnPasswordChanged);
-
-        UI.Button(body, "ContinueBtn", "Continue →", 20, colPrimary, Color.white,
-            new Vector2(1, 0), new Vector2(1, 0), new Vector2(-260, 32), new Vector2(-28, 88),
+        UI.Button(header, "SignInBtn", "Sign in", 18, new Color32(235, 237, 241, 255), colText,
+            new Vector2(1, 0), new Vector2(1, 1), new Vector2(-300, 14), new Vector2(-190, -14),
             () => { });
 
-        UI.Button(body, "ResetBtn", "Reset", 20, new Color32(235, 237, 241, 255), colText,
-            new Vector2(1, 0), new Vector2(1, 0), new Vector2(-390, 32), new Vector2(-270, 88),
+        UI.Button(header, "RegisterBtn", "Register", 18, colPrimary, Color.white,
+            new Vector2(1, 0), new Vector2(1, 1), new Vector2(-180, 14), new Vector2(-40, -14),
             () => { });
+
+        var hero = UI.Panel(body, "Hero", new Color32(230, 247, 238, 255),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -92), new Vector2(-18, -300));
+        UI.AddSoftOutline(hero.gameObject, colBorder, 2);
+
+        homeWelcomeLine = UI.Text(hero, "Welcome", "Government of Kenya services simplified.\nAll your records unified.", 26, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(20, -18), new Vector2(-20, -92),
+            TextAlignmentOptions.TopLeft);
+        homeWelcomeLine.enableWordWrapping = true;
+
+        homeSearchField = UI.Input(hero, "SearchField", "Search for a service e.g. passport, good conduct, KRA…", 18,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(20, -106), new Vector2(-20, -160),
+            isPassword: false);
+
+        UI.Text(hero, "Hint", "Lesson: Password protection + phishing. Always confirm the official domain before signing in.", 16, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(20, -164), new Vector2(-20, -210),
+            TextAlignmentOptions.TopLeft).enableWordWrapping = true;
+
+        var banner = UI.Panel(body, "Banner", new Color32(0, 120, 110, 255),
+            new Vector2(0, 0), new Vector2(1, 0), new Vector2(18, 18), new Vector2(-18, 170));
+        UI.AddSoftOutline(banner.gameObject, colBorder, 2);
+
+        UI.Text(banner, "BannerTitle", "Get started on eCitizen today", 26, Color.white,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(20, -20), new Vector2(-20, -70),
+            TextAlignmentOptions.TopLeft);
+
+        UI.Text(banner, "BannerSub", "Sign in to view your services. Then check your inbox for a security message.", 18, new Color32(235, 245, 245, 255),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(20, -72), new Vector2(-20, -120),
+            TextAlignmentOptions.TopLeft).enableWordWrapping = true;
     }
 
     void BuildDashboardWindow()
     {
-        dashboardWindow = UI.Window(desktop, "DashboardWindow", "Dashboard",
+        dashboardWindow = UI.Window(desktop, "DashboardWindow", "eCitizen Dashboard",
             dashboardWindowPos, dashboardWindowSize, colWindow, colBorder, colText,
-            onClose: () => { });
+            onClose: () => SwitchState(AppState.Home));
 
         var body = dashboardWindow.Find("Body").GetComponent<RectTransform>();
 
-        var hero = UI.Panel(body, "HeroCard", Color.white,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(18, -18), new Vector2(-18, -190));
-        UI.AddSoftOutline(hero.gameObject, new Color32(226, 230, 236, 255), 2);
+        var top = UI.Panel(body, "Top", new Color32(0, 0, 0, 0),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -18), new Vector2(-18, -140));
 
-        dashWelcome = UI.Text(hero, "Welcome", "Welcome.", 34, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(22, -20), new Vector2(-22, -70),
+        dashTitle = UI.Text(top, "Title", "Welcome.", 32, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 0), new Vector2(0, -56),
             TextAlignmentOptions.TopLeft);
 
-        dashTaskText = UI.Text(hero, "HintLine", "Task: Open Email to check a new message.", 18, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(22, -66), new Vector2(-22, -110),
+        dashSub = UI.Text(top, "Sub", "Check your inbox for a security message.", 18, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -54), new Vector2(0, -94),
             TextAlignmentOptions.TopLeft);
 
-        // icons area (same window, no new layout changes)
-        var iconRow = UI.Panel(body, "IconRow", new Color32(0, 0, 0, 0),
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(18, -210), new Vector2(-18, -350));
+        UI.Button(top, "BackHomeBtn", "← Home", 18, new Color32(235, 237, 241, 255), colText,
+            new Vector2(1, 0), new Vector2(1, 0), new Vector2(-360, 10), new Vector2(-250, 50),
+            () => { });
 
-        UI.IconButton(iconRow, "EmailIcon", "✉", "Email", "1 new message", new Color32(0, 140, 255, 255), () => { });
-        UI.IconButton(iconRow, "ProfileIcon", "👤", "Profile", "Edit account", new Color32(255, 120, 40, 255), () => { });
-        UI.IconButton(iconRow, "TipsIcon", "🛡", "Tips", "Check list", new Color32(120, 90, 255, 255), () => { });
+        UI.Button(top, "LogoutBtn", "Logout", 18, new Color32(235, 237, 241, 255), colText,
+            new Vector2(1, 0), new Vector2(1, 0), new Vector2(-240, 10), new Vector2(-120, 50),
+            () => { });
 
-        // simple manual placement (keeps within your existing window)
-        PlaceIcon(iconRow, "EmailIcon", 0);
-        PlaceIcon(iconRow, "ProfileIcon", 360);
-        PlaceIcon(iconRow, "TipsIcon", 720);
+        dashAlertBanner = UI.Panel(body, "AlertBanner", new Color32(255, 235, 235, 255),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -150), new Vector2(-18, -210));
+        UI.AddSoftOutline(dashAlertBanner.gameObject, new Color32(245, 170, 170, 255), 2);
 
-        UpdateDashboardWelcome();
-    }
+        dashAlertText = UI.Text(dashAlertBanner, "Text", "SECURITY ALERT: Suspicious login detected. Change your password immediately.", 18, colDanger,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(16, 10), new Vector2(-16, -10),
+            TextAlignmentOptions.MidlineLeft);
+        dashAlertText.enableWordWrapping = true;
 
-    void PlaceIcon(RectTransform parent, string name, float x)
-    {
-        var rt = parent.Find(name)?.GetComponent<RectTransform>();
-        if (!rt) return;
-        rt.anchorMin = new Vector2(0, 1);
-        rt.anchorMax = new Vector2(0, 1);
-        rt.pivot = new Vector2(0, 1);
-        rt.anchoredPosition = new Vector2(x, 0);
-        rt.sizeDelta = new Vector2(320, 130);
+        var inboxCard = UI.Panel(body, "InboxCard", Color.white,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -230), new Vector2(-18, -420));
+        UI.AddSoftOutline(inboxCard.gameObject, colBorder, 2);
+
+        UI.Text(inboxCard, "InboxTitle", "Inbox", 22, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(16, -14), new Vector2(-16, -50),
+            TextAlignmentOptions.TopLeft);
+
+        UI.Text(inboxCard, "InboxSub", "1 new message • Security notice", 16, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(16, -52), new Vector2(-16, -86),
+            TextAlignmentOptions.TopLeft);
+
+        UI.Button(inboxCard, "InboxBtn", "Open Inbox →", 18, colPrimary, Color.white,
+            new Vector2(1, 0), new Vector2(1, 0), new Vector2(-220, 18), new Vector2(-16, 56),
+            () => { });
+
+        var hintCard = UI.Panel(body, "HintCard", new Color32(235, 242, 255, 255),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -440), new Vector2(-18, -640));
+        UI.AddSoftOutline(hintCard.gameObject, new Color32(200, 220, 255, 255), 2);
+
+        dashHint = UI.Text(hintCard, "HintText",
+            "Lesson goals:\n" +
+            "• Password protection (use strong passwords)\n" +
+            "• Phishing (spot urgency + fake domain)\n\n" +
+            "Next: Open your inbox and inspect the message.",
+            18, colText,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(16, 14), new Vector2(-16, -14),
+            TextAlignmentOptions.TopLeft);
+        dashHint.enableWordWrapping = true;
     }
 
     void BuildMailWindow()
     {
-        mailWindow = UI.Window(desktop, "MailWindow", "Mail",
+        mailWindow = UI.Window(desktop, "MailWindow", "Inbox",
             mailWindowPos, mailWindowSize, colWindow, colBorder, colText,
-            onClose: () => SwitchState(MissionState.Dashboard));
+            onClose: () => SwitchState(AppState.Dashboard));
 
         var body = mailWindow.Find("Body").GetComponent<RectTransform>();
 
-        var left = UI.Panel(body, "LeftPane", new Color32(247, 248, 250, 255),
-            new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(300, 0));
-        UI.Image(left, "RightBorder", colBorder, new Vector2(1, 0), new Vector2(1, 1), new Vector2(-1, 0), new Vector2(0, 0));
-
-        UI.Text(left, "Folders", "Inbox", 22, colText,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -18), new Vector2(-18, -60),
-            TextAlignmentOptions.TopLeft);
-
-        // mail list item (for realism)
-        var mailItem = UI.Button(left, "MailItem", "", 18, new Color32(235, 242, 255, 255), colText,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(14, -70), new Vector2(-14, -158),
-            () => { });
-
-        var itemRT = mailItem.GetComponent<RectTransform>();
-        UI.Text(itemRT, "From", "From: IT Support <it-support@kca-security.co.ke>", 15, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(14, -10), new Vector2(-14, -36),
-            TextAlignmentOptions.TopLeft);
-        UI.Text(itemRT, "Subject", "URGENT: Account verification required", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(14, -34), new Vector2(-14, -70),
-            TextAlignmentOptions.TopLeft);
-        UI.Text(itemRT, "Snippet", "We detected unusual activity. Verify within 30 minutes…", 15, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(14, -70), new Vector2(-14, -106),
-            TextAlignmentOptions.TopLeft);
-
-        var right = UI.Panel(body, "RightPane", Color.clear,
-            new Vector2(0, 0), new Vector2(1, 1), new Vector2(300, 0), new Vector2(0, 0));
-
-        var ribbon = UI.Panel(right, "Ribbon", new Color32(252, 252, 253, 255),
-            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 0), new Vector2(0, -74));
-        UI.Image(ribbon, "BottomBorder", colBorder, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1));
+        var ribbon = UI.Panel(body, "Ribbon", new Color32(252, 252, 253, 255),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -74), new Vector2(0, 0));
+        UI.Image(ribbon, "BottomBorder", colBorder, new Vector2(0, 0), new Vector2(1, 0), Vector2.zero, new Vector2(0, 1));
 
         UI.Button(ribbon, "BackBtn", "← Dashboard", 18, new Color32(235, 237, 241, 255), colText,
-            new Vector2(0, 0), new Vector2(0, 1), new Vector2(16, 14), new Vector2(170, -14),
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(12, 12), new Vector2(170, -12),
             () => { });
 
         UI.Button(ribbon, "ReportBtn", "Report phishing", 18, new Color32(235, 237, 241, 255), colText,
-            new Vector2(0, 0), new Vector2(0, 1), new Vector2(188, 14), new Vector2(360, -14),
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(190, 12), new Vector2(360, -12),
             () => { });
 
         UI.Button(ribbon, "DeleteBtn", "Delete", 18, new Color32(235, 237, 241, 255), colText,
-            new Vector2(0, 0), new Vector2(0, 1), new Vector2(376, 14), new Vector2(480, -14),
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(378, 12), new Vector2(480, -12),
             () => { });
 
-        var scroll = UI.ScrollView(right, "MailScroll",
-            new Vector2(0, 0), new Vector2(1, 1), new Vector2(18, 18), new Vector2(-18, -90));
+        var left = UI.Panel(body, "LeftPane", new Color32(247, 248, 250, 255),
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0), new Vector2(320, -74));
+        UI.Image(left, "RightBorder", colBorder, new Vector2(1, 0), new Vector2(1, 1), new Vector2(-1, 0), Vector2.zero);
 
-        // Header section (so the verify button is at the START of email like you asked)
-        var header = UI.Panel(scroll.content, "Header", new Color32(0, 0, 0, 0),
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(0, 0), new Vector2(0, 0));
-        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 110;
+        UI.Text(left, "Folders", "Inbox", 22, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(16, -16), new Vector2(-16, -56),
+            TextAlignmentOptions.TopLeft);
 
-        mailSubjectLine = UI.Text(header, "Subject", "Subject: URGENT: Account verification required", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(0, -4), new Vector2(0, -34),
+        var mailItem = UI.Button(left, "OpenMailItemBtn", "", 18, new Color32(235, 242, 255, 255), colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(12, -64), new Vector2(-12, -160),
+            () => { });
+        var itemRT = mailItem.GetComponent<RectTransform>();
+
+        UI.Text(itemRT, "From", "From: eCitizen Support <support@ecitizen.go-ke.com>", 14, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(12, -10), new Vector2(-12, -34),
+            TextAlignmentOptions.TopLeft).enableWordWrapping = true;
+
+        UI.Text(itemRT, "Subject", "URGENT: Verify your account to avoid suspension", 18, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(12, -32), new Vector2(-12, -74),
+            TextAlignmentOptions.TopLeft).enableWordWrapping = true;
+
+        UI.Text(itemRT, "Snippet", "We detected unusual activity. Verify within 30 minutes…", 14, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(12, -72), new Vector2(-12, -112),
+            TextAlignmentOptions.TopLeft).enableWordWrapping = true;
+
+        var right = UI.Panel(body, "RightPane", Color.white,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(320, 0), new Vector2(0, -74));
+        UI.AddSoftOutline(right.gameObject, colBorder, 2);
+
+        var header = UI.Panel(right, "MailHeader", new Color32(0, 0, 0, 0),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(16, -16), new Vector2(-16, -140));
+
+        mailTitleLine = UI.Text(header, "Title", "Security message", 24, colText,
+            new Vector2(0, 1), new Vector2(1, 1), Vector2.zero, new Vector2(0, -40),
+            TextAlignmentOptions.TopLeft);
+
+        mailFromLine = UI.Text(header, "From", "From: eCitizen Support <support@ecitizen.go-ke.com>", 16, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -42), new Vector2(0, -72),
+            TextAlignmentOptions.TopLeft);
+        mailFromLine.enableWordWrapping = true;
+
+        mailSubjectLine = UI.Text(header, "Subject", "Subject: URGENT: Verify your account to avoid suspension", 16, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -74), new Vector2(0, -110),
             TextAlignmentOptions.TopLeft);
         mailSubjectLine.enableWordWrapping = true;
 
-        mailSenderLine = UI.Text(header, "Sender", "From: IT Support <it-support@kca-security.co.ke>", 16, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(0, -34), new Vector2(0, -62),
-            TextAlignmentOptions.TopLeft);
-        mailSenderLine.enableWordWrapping = true;
-
-        // Verify button (ACTUAL button, not label)
-        var verifyGO = UI.LayoutButtonFullWidth(scroll.content, "VerifyDomainBtn",
-            $"VERIFY NOW  →  {suspiciousDomain}",
-            18, new Color32(235, 242, 255, 255), colLink,
-            height: 56,
+        var verifyGO = UI.Button(header, "VerifyBtn", $"VERIFY NOW  →  {suspiciousDomain}", 16,
+            new Color32(235, 242, 255, 255), colLink,
+            new Vector2(1, 0), new Vector2(1, 0), new Vector2(-430, 0), new Vector2(-16, 44),
             () => { });
 
-        // Make it feel like a link (underline + hover)
         var verifyLabel = verifyGO.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
         if (verifyLabel)
         {
@@ -561,134 +735,122 @@ public class PhishingMissionMonitorUI : MonoBehaviour
         }
         UI.AddHoverScale(verifyGO, 1.00f, 1.03f);
 
-        // Body text (below verify)
-        mailBodyText = UI.LayoutText(scroll.content, "MailBody", BuildEmailBody(), 18, colText, TextAlignmentOptions.TopLeft);
+        mailBodyText = UI.Text(right, "MailBody", BuildMailBody(), 18, colText,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(16, 120), new Vector2(-16, -160),
+            TextAlignmentOptions.TopLeft);
+        mailBodyText.enableWordWrapping = true;
+
+        var hintBox = UI.Panel(right, "HintBox", new Color32(255, 250, 235, 255),
+            new Vector2(0, 0), new Vector2(1, 0), new Vector2(16, 16), new Vector2(-16, 108));
+        UI.AddSoftOutline(hintBox.gameObject, new Color32(245, 220, 160, 255), 2);
+
+        mailHintBox = UI.Text(hintBox, "HintText",
+            "Hints:\n• Urgency (“30 minutes”) is a red flag\n• Sender domain looks wrong (go-ke)\n• Don’t type passwords from email links\n\nGood actions: Report or Delete.",
+            16, colText,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(12, 10), new Vector2(-12, -10),
+            TextAlignmentOptions.TopLeft);
+        mailHintBox.enableWordWrapping = true;
     }
 
     void BuildBrowserWindow()
     {
         browserWindow = UI.Window(desktop, "BrowserWindow", "Browser",
             browserWindowPos, browserWindowSize, colWindow, colBorder, colText,
-            onClose: () => SwitchState(MissionState.Mail));
+            onClose: () => SwitchState(AppState.Mail));
 
         var body = browserWindow.Find("Body").GetComponent<RectTransform>();
 
-        // Top bar
         var top = UI.Panel(body, "TopBar", new Color32(252, 252, 253, 255),
             new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -72), new Vector2(0, 0));
-        UI.Image(top, "BottomBorder", colBorder,
-            new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1));
+        UI.Image(top, "BottomBorder", colBorder, new Vector2(0, 0), new Vector2(1, 0), Vector2.zero, new Vector2(0, 1));
 
         UI.Button(top, "BackBtn", "←", 18, new Color32(235, 237, 241, 255), colText,
             new Vector2(0, 0), new Vector2(0, 1), new Vector2(12, 12), new Vector2(60, -12),
             () => { });
 
-        // Secure indicator (NEXT UPGRADE)
-        browserSecureDot = UI.Image(top, "SecureDot", colDanger,
-            new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-            new Vector2(72, -8), new Vector2(88, 8));
+        browserSecureDot = UI.Image(top, "SecureDot", colGood,
+            new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(72, -8), new Vector2(88, 8));
 
-        browserSecureLabel = UI.Text(top, "SecureLabel", "Not secure", 16, colDanger,
-            new Vector2(0, 0), new Vector2(0, 1),
-            new Vector2(92, 12), new Vector2(190, -12),
+        browserSecureLabel = UI.Text(top, "SecureLabel", "Secure", 16, colGood,
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(92, 12), new Vector2(170, -12),
             TextAlignmentOptions.MidlineLeft);
 
-        browserUrlText = UI.Text(top, "UrlText", $"https://{suspiciousDomain}", 16, colText,
-            new Vector2(0, 0), new Vector2(1, 1),
-            new Vector2(200, 12), new Vector2(-240, -12),
+        browserUrlText = UI.Text(top, "UrlText", $"https://{officialDomain}", 16, colText,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(180, 12), new Vector2(-240, -12),
             TextAlignmentOptions.MidlineLeft);
 
         browserStatus = UI.Text(top, "Status", "", 16, colMuted,
-            new Vector2(1, 0), new Vector2(1, 1),
-            new Vector2(-240, 12), new Vector2(-16, -12),
+            new Vector2(1, 0), new Vector2(1, 1), new Vector2(-240, 12), new Vector2(-16, -12),
             TextAlignmentOptions.MidlineRight);
 
-        // Phish Page
         browserPageRoot = UI.Panel(body, "Page", Color.white,
-            new Vector2(0, 0), new Vector2(1, 1),
-            new Vector2(18, 18), new Vector2(-18, -90));
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(18, 18), new Vector2(-18, -90));
         UI.AddSoftOutline(browserPageRoot.gameObject, new Color32(226, 230, 236, 255), 2);
 
-        UI.Text(browserPageRoot, "PageTitle", "KCA Account Verification", 30, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -24), new Vector2(-26, -80),
+        browserPageTitle = UI.Text(browserPageRoot, "PageTitle", "Sign in", 32, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -26), new Vector2(-26, -86),
             TextAlignmentOptions.TopLeft);
 
-        UI.Text(browserPageRoot, "PageSub",
-            "For security, please confirm your password to continue.",
-            18, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -78), new Vector2(-26, -120),
+        browserPageSub = UI.Text(browserPageRoot, "PageSub", "", 18, colMuted,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -86), new Vector2(-26, -140),
+            TextAlignmentOptions.TopLeft);
+        browserPageSub.enableWordWrapping = true;
+
+        UI.Text(browserPageRoot, "UserLabel", "Email / Phone", 18, colText,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -170), new Vector2(-26, -204),
             TextAlignmentOptions.TopLeft);
 
-        UI.Text(browserPageRoot, "UserLabel", "Account", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -150), new Vector2(-26, -185),
-            TextAlignmentOptions.TopLeft);
-
-        UI.Text(browserPageRoot, "UserValue", "", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -185), new Vector2(-26, -220),
-            TextAlignmentOptions.TopLeft);
+        browserUserField = UI.Input(browserPageRoot, "UserField", "e.g. name@email.com or 07xx...", 18,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -210), new Vector2(-26, -270),
+            false);
 
         UI.Text(browserPageRoot, "PassLabel", "Password", 18, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -250), new Vector2(-26, -285),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -290), new Vector2(-26, -324),
             TextAlignmentOptions.TopLeft);
 
         browserPassField = UI.Input(browserPageRoot, "PasswordField", "Enter your password…", 18,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -292), new Vector2(-26, -356),
-            isPassword: true);
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -330), new Vector2(-26, -390),
+            true);
 
         browserError = UI.Text(browserPageRoot, "Error", "", 16, colDanger,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -362), new Vector2(-26, -398),
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -396), new Vector2(-26, -432),
             TextAlignmentOptions.TopLeft);
         browserError.gameObject.SetActive(false);
 
-        var submitGO = UI.Button(browserPageRoot, "SubmitBtn", "Sign in", 20, colPrimary, Color.white,
-            new Vector2(1, 1), new Vector2(1, 1),
-            new Vector2(-240, -420), new Vector2(-26, -372),
+        var hintBox = UI.Panel(browserPageRoot, "HintBox", new Color32(235, 242, 255, 255),
+            new Vector2(0, 0), new Vector2(1, 0), new Vector2(26, 18), new Vector2(-26, 110));
+        UI.AddSoftOutline(hintBox.gameObject, new Color32(200, 220, 255, 255), 2);
+
+        browserHintBox = UI.Text(hintBox, "HintText", "", 16, colText,
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(12, 10), new Vector2(-12, -10),
+            TextAlignmentOptions.TopLeft);
+        browserHintBox.enableWordWrapping = true;
+
+        var submitGO = UI.Button(browserPageRoot, "SubmitBtn", "Continue", 20, colPrimary, Color.white,
+            new Vector2(1, 1), new Vector2(1, 1), new Vector2(-240, -470), new Vector2(-26, -424),
             () => { });
         UI.AddHoverScale(submitGO, 1.00f, 1.03f);
 
-        UI.Text(browserPageRoot, "Footer", "© KCA Security • Help • Privacy • Terms", 14, colMuted,
-            new Vector2(0, 0), new Vector2(1, 0),
-            new Vector2(26, 22), new Vector2(-26, 54),
-            TextAlignmentOptions.MidlineLeft);
-
-        // Success page (NEXT UPGRADE): shows even if hacked (silent compromise)
         browserSuccessRoot = UI.Panel(body, "Success", Color.white,
-            new Vector2(0, 0), new Vector2(1, 1),
-            new Vector2(18, 18), new Vector2(-18, -90));
+            new Vector2(0, 0), new Vector2(1, 1), new Vector2(18, 18), new Vector2(-18, -90));
         UI.AddSoftOutline(browserSuccessRoot.gameObject, new Color32(226, 230, 236, 255), 2);
 
-        UI.Text(browserSuccessRoot, "SuccessTitle", "Verification successful", 34, colGood,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -36), new Vector2(-26, -110),
+        UI.Text(browserSuccessRoot, "SuccessTitle", "Processing…", 34, colGood,
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -36), new Vector2(-26, -110),
             TextAlignmentOptions.TopLeft);
 
         UI.Text(browserSuccessRoot, "SuccessBody",
-            "Thank you. Your account has been verified.\n\nYou may close this page.",
+            "If this was a phishing page, you may be compromised even if it says “success”.",
             18, colText,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -110), new Vector2(-26, -190),
-            TextAlignmentOptions.TopLeft);
-
-        UI.Text(browserSuccessRoot, "SmallNote",
-            "Tip: Legit organizations rarely ask you to enter your password from an email link.",
-            16, colMuted,
-            new Vector2(0, 1), new Vector2(1, 1),
-            new Vector2(26, -190), new Vector2(-26, -240),
-            TextAlignmentOptions.TopLeft);
+            new Vector2(0, 1), new Vector2(1, 1), new Vector2(26, -110), new Vector2(-26, -190),
+            TextAlignmentOptions.TopLeft).enableWordWrapping = true;
 
         browserSuccessRoot.gameObject.SetActive(false);
     }
 
     void BuildResultWindow()
     {
-        resultWindow = UI.Window(desktop, "ResultWindow", "Security Outcome",
+        resultWindow = UI.Window(desktop, "ResultWindow", "Lesson Outcome",
             resultWindowPos, resultWindowSize, colWindow, colBorder, colText,
             onClose: () => ShowWindow(resultWindow, false));
 
@@ -702,7 +864,7 @@ public class PhishingMissionMonitorUI : MonoBehaviour
             new Vector2(0, 0), new Vector2(1, 1), new Vector2(26, 120), new Vector2(-26, -92),
             TextAlignmentOptions.TopLeft);
 
-        UI.Button(body, "RetryBtn", "Retry mission", 20, colPrimary, Color.white,
+        UI.Button(body, "RetryBtn", "Retry", 20, colPrimary, Color.white,
             new Vector2(1, 0), new Vector2(1, 0), new Vector2(-240, 26), new Vector2(-26, 86),
             () => { });
 
@@ -712,92 +874,152 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     }
 
     // =========================
-    // State / Flow
+    // State / UI Updates
     // =========================
-    void SwitchState(MissionState newState)
+    void SwitchState(AppState newState)
     {
         state = newState;
 
-        ShowWindow(accountWindow, state == MissionState.CreateAccount);
-        ShowWindow(dashboardWindow, state == MissionState.Dashboard);
-        ShowWindow(mailWindow, state == MissionState.Mail);
-        ShowWindow(browserWindow, state == MissionState.Browser);
-        ShowWindow(resultWindow, state == MissionState.Result);
+        ShowWindow(homeWindow, state == AppState.Home);
+        ShowWindow(browserWindow, state == AppState.BrowserOfficialLogin || state == AppState.BrowserPhishVerify);
+        ShowWindow(dashboardWindow, state == AppState.Dashboard);
+        ShowWindow(mailWindow, state == AppState.Mail);
+        ShowWindow(resultWindow, state == AppState.Result);
 
-        if (state == MissionState.Dashboard) UpdateDashboardWelcome();
+        if (state == AppState.Home) UpdateHome();
+        if (state == AppState.Dashboard) UpdateDashboard();
+        if (state == AppState.Mail) UpdateMail();
+        if (state == AppState.BrowserOfficialLogin) PrepareBrowser(isPhish: false);
+        if (state == AppState.BrowserPhishVerify) PrepareBrowser(isPhish: true);
 
         RefreshHintState();
+        ApplyHackedUI();
+        RefreshRewardHUD();
     }
 
-    void UpdateDashboardWelcome()
+    void UpdateHome()
     {
-        if (!dashWelcome) return;
+        if (homeWelcomeLine)
+            homeWelcomeLine.text = "Government of Kenya services simplified.\nAll your government records unified.";
+    }
 
-        dashWelcome.text = $"Welcome, {chosenUsername}.";
+    void UpdateDashboard()
+    {
+        if (dashTitle) dashTitle.text = loggedIn ? $"Welcome, {citizenIdOrEmail}." : "Welcome.";
+        if (dashSub) dashSub.text = "New: You have 1 security message in your inbox.";
 
-        if (dashTaskText)
+        if (dashAlertBanner) dashAlertBanner.gameObject.SetActive(hacked);
+        if (dashAlertText)
         {
-            dashTaskText.text = openedMailOnce
-                ? "Task: Inspect the email. Report/delete OR verify (risky)."
-                : "Task: Open Email to check a new message.";
+            dashAlertText.text = hacked
+                ? "SECURITY ALERT: Your account may be compromised. Change password + enable 2FA immediately."
+                : "";
+        }
+
+        if (dashHint)
+        {
+            dashHint.text =
+                "What to do:\n" +
+                "1) Open Inbox\n" +
+                "2) Inspect sender + domain + urgency\n" +
+                "3) Rewarded actions: Report or Delete\n" +
+                "4) Risky: Clicking a link and entering your password";
+        }
+    }
+
+    void UpdateMail()
+    {
+        if (!openedInbox)
+        {
+            openedInbox = true;
+            AddScore(10, "Opened inbox (good awareness)");
+            UpdateDashboard();
+        }
+
+        if (mailTitleLine) mailTitleLine.text = "Security message";
+        if (mailFromLine) mailFromLine.text = "From: eCitizen Support <support@ecitizen.go-ke.com>";
+        if (mailSubjectLine) mailSubjectLine.text = "Subject: URGENT: Verify your account to avoid suspension";
+        if (mailBodyText) mailBodyText.text = BuildMailBody();
+
+        if (mailHintBox)
+        {
+            mailHintBox.text =
+                "Hints (What’s wrong here):\n" +
+                "• Urgency (“30 minutes”) pushes panic\n" +
+                "• Sender domain is NOT official\n" +
+                $"• Official should look like: {officialDomain}\n" +
+                "• Legit orgs rarely ask for your password from a link\n\n" +
+                "Good actions: Report or Delete (you earn points).";
         }
     }
 
     // =========================
-    // Gameplay actions
+    // Flow Actions
     // =========================
-    void OnClickContinue()
+    void OpenOfficialLogin()
     {
-        ClearAccountError();
-
-        chosenUsername = usernameInput ? usernameInput.text.Trim() : chosenUsername;
-        chosenPassword = passwordInput ? passwordInput.text : "";
-        chosenGrade = GradePassword(chosenPassword);
-
-        if (string.IsNullOrWhiteSpace(chosenUsername))
-        {
-            SetAccountError("Please enter a username.");
-            return;
-        }
-
-        if (chosenGrade == PasswordGrade.Unknown)
-        {
-            SetAccountError("Please enter a password.");
-            return;
-        }
-
-        openedMailOnce = false;
-        clickedVerify = false;
+        clickedSuspiciousVerify = false;
         submittedOnPhishPage = false;
+        SwitchState(AppState.BrowserOfficialLogin);
 
-        UpdateDashboardWelcome();
-        SwitchState(MissionState.Dashboard);
+        if (Application.isPlaying) StartCoroutine(BrowserLoadRoutine());
+        else
+        {
+            if (browserStatus) browserStatus.text = "Secure";
+            if (browserPageRoot) browserPageRoot.gameObject.SetActive(true);
+        }
     }
 
-    void OnClickVerify()
+    void OpenInbox()
     {
-        clickedVerify = true;
-        SwitchState(MissionState.Browser);
+        SwitchState(AppState.Mail);
+    }
 
-        // Fill browser account label
-        var userValue = browserPageRoot ? browserPageRoot.Find("UserValue")?.GetComponent<TMP_Text>() : null;
-        if (userValue) userValue.text = chosenUsername;
+    void ReportEmail()
+    {
+        if (reportedEmail) return;
+        reportedEmail = true;
 
-        // Loading behavior
-        if (browserStatus) browserStatus.text = "Loading…";
-        if (browserPageRoot) browserPageRoot.gameObject.SetActive(false);
-        if (browserSuccessRoot) browserSuccessRoot.gameObject.SetActive(false);
+        AddScore(30, "Reported phishing (best action)");
+        ShowOutcome(
+            "GOOD DECISION ✅",
+            colGood,
+            "You reported the suspicious email.\n\n" +
+            "Why this is correct:\n" +
+            "• Reporting protects other users\n" +
+            "• You did not engage with the link\n\n" +
+            "Next time:\n" +
+            "• Verify by typing the official site directly"
+        );
+        SwitchState(AppState.Result);
+    }
 
-        // secure label always not secure (realistic)
-        if (browserSecureDot) browserSecureDot.color = colDanger;
-        if (browserSecureLabel)
-        {
-            browserSecureLabel.text = "Not secure";
-            browserSecureLabel.color = colDanger;
-        }
+    void DeleteEmail()
+    {
+        if (deletedEmail) return;
+        deletedEmail = true;
 
-        if (Application.isPlaying)
-            StartCoroutine(BrowserLoadRoutine());
+        AddScore(20, "Deleted suspicious email (good action)");
+        ShowOutcome(
+            "GOOD DECISION ✅",
+            colGood,
+            "You deleted the suspicious email.\n\n" +
+            "Why this is correct:\n" +
+            "• Reduces the chance you click it later\n" +
+            "• Avoids credential theft\n\n" +
+            "Even better:\n" +
+            "• Report it as phishing too"
+        );
+        SwitchState(AppState.Result);
+    }
+
+    void ClickVerifyLink()
+    {
+        clickedSuspiciousVerify = true;
+        AddScore(-5, "Clicked suspicious link (bad move)");
+        SwitchState(AppState.BrowserPhishVerify);
+
+        if (Application.isPlaying) StartCoroutine(BrowserLoadRoutine());
         else
         {
             if (browserStatus) browserStatus.text = "Not secure";
@@ -808,31 +1030,84 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     IEnumerator BrowserLoadRoutine()
     {
         yield return new WaitForSeconds(browserLoadSeconds);
-        if (browserStatus) browserStatus.text = "Not secure";
+        if (browserStatus) browserStatus.text = (state == AppState.BrowserPhishVerify) ? "Not secure" : "Secure";
         if (browserPageRoot) browserPageRoot.gameObject.SetActive(true);
         RefreshHintState();
     }
 
-    void OnClickBrowserSubmit()
+    void PrepareBrowser(bool isPhish)
     {
-        if (!browserPassField) return;
+        if (browserPageRoot) browserPageRoot.gameObject.SetActive(false);
+        if (browserSuccessRoot) browserSuccessRoot.gameObject.SetActive(false);
+        ClearBrowserError();
 
-        var entered = browserPassField.text ?? "";
-        if (string.IsNullOrWhiteSpace(entered))
+        if (browserStatus) browserStatus.text = "Loading…";
+
+        if (!isPhish)
+        {
+            if (browserUrlText) browserUrlText.text = $"https://{officialDomain}";
+            if (browserSecureDot) browserSecureDot.color = colGood;
+            if (browserSecureLabel) { browserSecureLabel.text = "Secure"; browserSecureLabel.color = colGood; }
+
+            if (browserPageTitle) browserPageTitle.text = "Sign in to eCitizen";
+            if (browserPageSub) browserPageSub.text = "Official sign-in. Good practice: use a strong password.";
+            if (browserHintBox)
+                browserHintBox.text =
+                    "Password tips:\n" +
+                    "• 12+ characters\n" +
+                    "• Mix UPPER/lower, numbers, symbols\n" +
+                    "• Avoid common words (kenya, nairobi, password)\n" +
+                    "• Use MFA/2FA";
+        }
+        else
+        {
+            if (browserUrlText) browserUrlText.text = $"https://{suspiciousDomain}";
+            if (browserSecureDot) browserSecureDot.color = colDanger;
+            if (browserSecureLabel) { browserSecureLabel.text = "Not secure"; browserSecureLabel.color = colDanger; }
+
+            if (browserPageTitle) browserPageTitle.text = "Urgent Verification Required";
+            if (browserPageSub) browserPageSub.text =
+                "To avoid suspension, confirm your password now.\n(This is a classic phishing pattern.)";
+            if (browserHintBox)
+                browserHintBox.text =
+                    "What’s wrong here:\n" +
+                    "• Urgency + threat\n" +
+                    "• Not official domain\n" +
+                    "• Asking for password from a link\n\n" +
+                    "Correct action: close page, report email.";
+        }
+
+        if (browserUserField) browserUserField.text = citizenIdOrEmail;
+        if (browserPassField) browserPassField.text = "";
+    }
+
+    void OnBrowserSubmit()
+    {
+        if (!browserUserField || !browserPassField) return;
+
+        var user = (browserUserField.text ?? "").Trim();
+        var pass = (browserPassField.text ?? "");
+
+        if (string.IsNullOrWhiteSpace(user))
+        {
+            SetBrowserError("Please enter email/phone.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(pass))
         {
             SetBrowserError("Password is required.");
             return;
         }
 
+        citizenIdOrEmail = user;
+        chosenPassword = pass;
+        chosenGrade = GradePassword(chosenPassword);
         ClearBrowserError();
-        submittedOnPhishPage = true;
 
-        if (browserStatus) browserStatus.text = "Signing in…";
-
-        if (Application.isPlaying)
-            StartCoroutine(SubmitRoutine());
-        else
-            ShowPostSuccessThenOutcome();
+        if (browserStatus) browserStatus.text = "Processing…";
+        if (Application.isPlaying) StartCoroutine(SubmitRoutine());
+        else ShowPostSuccessThenOutcome();
     }
 
     IEnumerator SubmitRoutine()
@@ -843,15 +1118,12 @@ public class PhishingMissionMonitorUI : MonoBehaviour
 
     void ShowPostSuccessThenOutcome()
     {
-        // Success page shown ALWAYS (even if compromised) — realism upgrade
         if (browserPageRoot) browserPageRoot.gameObject.SetActive(false);
         if (browserSuccessRoot) browserSuccessRoot.gameObject.SetActive(true);
         if (browserStatus) browserStatus.text = "Complete";
 
-        if (Application.isPlaying)
-            StartCoroutine(PostSuccessDelayRoutine());
-        else
-            ResolveOutcome();
+        if (Application.isPlaying) StartCoroutine(PostSuccessDelayRoutine());
+        else ResolveOutcome();
     }
 
     IEnumerator PostSuccessDelayRoutine()
@@ -862,125 +1134,304 @@ public class PhishingMissionMonitorUI : MonoBehaviour
 
     void ResolveOutcome()
     {
-        // If they clicked + submitted password -> phishing scenario
-        if (clickedVerify && submittedOnPhishPage)
+        bool isPhish = (state == AppState.BrowserPhishVerify);
+
+        if (!isPhish)
         {
-            int roll = UnityEngine.Random.Range(0, 101);
-            int chance = chosenGrade switch
-            {
-                PasswordGrade.Weak => phishHackChanceWeak,
-                PasswordGrade.Medium => phishHackChanceMedium,
-                PasswordGrade.Strong => phishHackChanceStrong,
-                _ => 80
-            };
-
-            bool hacked = roll < chance;
-
-            if (hacked)
-            {
-                ShowOutcome("ACCOUNT COMPROMISED", colDanger,
-                    $"You entered your password on a suspicious site.\n\n" +
-                    $"Attack succeeded (roll {roll} < {chance}%).\n\n" +
-                    $"Password strength: {chosenGrade}\n\nLessons:\n" +
-                    "• Never type passwords from email links\n" +
-                    "• Check domain spelling (typosquatting)\n" +
-                    "• Use MFA + password manager\n" +
-                    "• Report suspicious emails");
-            }
-            else
-            {
-                ShowOutcome("PHISH ATTEMPT FAILED", colWarn,
-                    $"You entered your password on a suspicious site.\n\n" +
-                    $"Attack failed (roll {roll} ≥ {chance}%).\n\n" +
-                    $"Password strength: {chosenGrade}\n\nLesson:\n" +
-                    "• Strong passwords reduce risk, but clicking is still dangerous.\n" +
-                    "• Best action: report/delete and verify via official channels.");
-            }
-
-            SwitchState(MissionState.Result);
+            loggedIn = true;
+            AddScore(15, "Signed in via official site");
+            SwitchState(AppState.Dashboard);
             return;
         }
 
-        // If they never clicked verify, simulate baseline hacking chance based on password strength
-        int roll2 = UnityEngine.Random.Range(0, 101);
-        int chance2 = chosenGrade switch
+        submittedOnPhishPage = true;
+
+        int roll = UnityEngine.Random.Range(0, 101);
+        int chance = chosenGrade switch
         {
-            PasswordGrade.Weak => hackChanceIfWeak,
-            PasswordGrade.Medium => hackChanceIfMedium,
-            PasswordGrade.Strong => hackChanceIfStrong,
-            _ => 50
+            PasswordGrade.Weak => phishHackChanceWeak,
+            PasswordGrade.Medium => phishHackChanceMedium,
+            PasswordGrade.Strong => phishHackChanceStrong,
+            _ => 80
         };
 
-        bool hacked2 = roll2 < chance2;
+        hacked = roll < chance;
 
-        if (hacked2)
+        if (hacked)
         {
-            ShowOutcome("ACCOUNT AT RISK", colWarn,
-                $"You avoided the phishing link, but your password was weak.\n\n" +
-                $"Risk simulation: (roll {roll2} < {chance2}%).\n\n" +
-                $"Password strength: {chosenGrade}\n\nFix:\n" +
-                "• Use 12–16+ characters\n" +
-                "• Avoid common words\n" +
-                "• Add symbols + uniqueness\n" +
-                "• Enable MFA");
+            AddScore(-40, "Entered password on phishing site");
+            TriggerHackedAlert();
+
+            ShowOutcome(
+                "HACKED ❌",
+                colDanger,
+                $"You entered your password on a suspicious site.\n\n" +
+                $"Attack succeeded (roll {roll} < {chance}%).\n" +
+                $"Password strength: {chosenGrade}\n\n" +
+                "This is a BIG DEAL.\nYour credentials may be stolen and used to access services."
+            );
         }
         else
         {
-            ShowOutcome("SAFE", colGood,
-                $"You avoided the phishing link and your password held up.\n\n" +
-                $"Password strength: {chosenGrade}\n\nBest practice:\n" +
-                "• Use a password manager\n" +
-                "• Enable MFA\n" +
-                "• Report suspicious messages");
+            AddScore(-15, "Typed password on suspicious page (still wrong)");
+
+            ShowOutcome(
+                "PHISHING ATTEMPT (YOU GOT LUCKY) ⚠️",
+                colWarn,
+                $"You entered your password on a suspicious site.\n\n" +
+                $"Attack failed (roll {roll} ≥ {chance}%).\n" +
+                $"Password strength: {chosenGrade}\n\n" +
+                "Lesson:\n" +
+                "• Strong passwords reduce risk, but clicking & typing is still wrong.\n" +
+                "Best action: report/delete and sign in via official site."
+            );
         }
 
-        SwitchState(MissionState.Result);
+        SwitchState(AppState.Result);
     }
 
-    void ShowOutcome(string title, Color titleColor, string body)
+    void Logout()
     {
-        var bodyRT = resultWindow.Find("Body").GetComponent<RectTransform>();
-        var t = bodyRT.Find("OutcomeTitle").GetComponent<TMP_Text>();
-        var b = bodyRT.Find("OutcomeBody").GetComponent<TMP_Text>();
+        loggedIn = false;
+        openedInbox = false;
+        clickedSuspiciousVerify = false;
+        submittedOnPhishPage = false;
+        reportedEmail = false;
+        deletedEmail = false;
+        hacked = false;
 
-        t.text = title;
-        t.color = titleColor;
+        chosenPassword = "";
+        chosenGrade = PasswordGrade.Unknown;
 
-        b.text = body;
-        b.color = colText;
-    }
+        if (hackedFlashRoutine != null && Application.isPlaying) StopCoroutine(hackedFlashRoutine);
+        hackedFlashRoutine = null;
 
-    void ShowWindow(RectTransform w, bool show)
-    {
-        if (w) w.gameObject.SetActive(show);
+        ApplyHackedUI();
+        SwitchState(AppState.Home);
     }
 
     // =========================
-    // Mail content + domain flashing highlight (NEXT UPGRADE)
+    // Rewards / badge + HUD
     // =========================
-    string BuildEmailBody()
+    void AddScore(int delta, string reason)
     {
-        return
-            "Hello,\n\n" +
-            "We detected unusual sign-in activity on your account.\n" +
-            "To avoid suspension, verify your account within 30 minutes.\n\n" +
-            "Warning signs:\n" +
-            "• Creates panic/urgency\n" +
-            "• Generic greeting\n" +
-            "• Suspicious domain spelling\n" +
-            "• Asks you to enter your password\n\n" +
-            "If you weren’t expecting this message, report it as phishing.\n";
+        score += delta;
+        score = Mathf.Clamp(score, -200, 999);
+
+        lastScoreDelta = delta;
+        lastScoreReason = reason ?? "";
+        lastScoreTime = Time.time;
+
+        RefreshRewardHUD();
+        ShowToast(delta, reason);
+    }
+
+    void RefreshRewardHUD()
+    {
+        if (!showRewardHUD) { if (hudRoot) hudRoot.gameObject.SetActive(false); return; }
+        if (hudRoot) hudRoot.gameObject.SetActive(true);
+
+        if (hudScore) hudScore.text = $"Score: {score}";
+        if (hudBadge) hudBadge.text = $"Badge: {ComputeBadge(score)}";
+    }
+
+    void ShowToast(int delta, string reason)
+    {
+        if (!hudRoot || !hudToast || !hudToastBg) return;
+
+        string sign = delta >= 0 ? "+" : "";
+        string msg = $"{sign}{delta}  •  {reason}";
+        hudToast.text = msg;
+
+        // Color tone
+        Color32 bg = (delta >= 0) ? new Color32(0, 140, 70, 220) : new Color32(204, 46, 46, 220);
+        bg.a = 0;
+        hudToastBg.color = bg;
+
+        var toastRT = hudRoot.Find("Toast");
+        if (toastRT) toastRT.gameObject.SetActive(true);
+    }
+
+    void AnimateRewardToast()
+    {
+        if (!hudRoot) return;
+        var toastRT = hudRoot.Find("Toast");
+        if (!toastRT) return;
+        if (!toastRT.gameObject.activeSelf) return;
+
+        float elapsed = Time.time - lastScoreTime;
+        if (elapsed >= toastDuration)
+        {
+            toastRT.gameObject.SetActive(false);
+            return;
+        }
+
+        // Fade in then out
+        float half = toastDuration * 0.5f;
+        float a = elapsed < half ? (elapsed / half) : (1f - (elapsed - half) / half);
+        a = Mathf.Clamp01(a);
+
+        if (hudToastBg)
+        {
+            var c = hudToastBg.color;
+            c.a = (byte)Mathf.RoundToInt(220 * a);
+            hudToastBg.color = c;
+        }
+        if (hudToast)
+        {
+            var tc = hudToast.color;
+            tc.a = a;
+            hudToast.color = tc;
+        }
+
+        // slight pop
+        var tr = toastRT.GetComponent<RectTransform>();
+        if (tr)
+        {
+            float s = 1f + 0.03f * Mathf.Sin(Time.time * 10f);
+            tr.localScale = Vector3.one * s;
+        }
+    }
+
+    string ComputeBadge(int s)
+    {
+        if (s >= 80) return "Cyber Smart 🛡️";
+        if (s >= 40) return "Aware ✅";
+        if (s >= 10) return "Learner 📘";
+        if (s >= 0) return "Untrained ⚠️";
+        return "At Risk ❌";
+    }
+
+    // =========================
+    // Hacked alert visuals (BIG)
+    // =========================
+    void TriggerHackedAlert()
+    {
+        if (!Application.isPlaying) return;
+
+        if (hackedFlashRoutine != null) StopCoroutine(hackedFlashRoutine);
+        hackedFlashRoutine = StartCoroutine(HackedFlashRoutine());
+    }
+
+    IEnumerator HackedFlashRoutine()
+    {
+        if (!hackedOverlay) yield break;
+
+        hackedOverlay.gameObject.SetActive(true);
+
+        float t = 0f;
+        while (hacked)
+        {
+            t += Time.deltaTime * hackedFlashSpeed;
+            float a = 0.35f + 0.35f * Mathf.Sin(t);
+            var c = hackedFlashColor;
+            c.a = Mathf.Clamp01(a);
+            if (hackedOverlayImage) hackedOverlayImage.color = c;
+            yield return null;
+        }
+
+        hackedOverlay.gameObject.SetActive(false);
+    }
+
+    void ApplyHackedUI()
+    {
+        if (hackedOverlay)
+        {
+            hackedOverlay.gameObject.SetActive(hacked);
+            if (!hacked && hackedOverlayImage) hackedOverlayImage.color = new Color(0, 0, 0, 0);
+            if (hacked && hackedOverlayImage) hackedOverlayImage.color = hackedFlashColor;
+        }
+
+        if (hackedBigPanel)
+            hackedBigPanel.gameObject.SetActive(hacked);
+
+        if (hacked && hackedBigTitle)
+            hackedBigTitle.text = "🚨  ACCOUNT COMPROMISED  🚨";
+
+        if (hacked && hackedBigBody)
+        {
+            hackedBigBody.text =
+                "YOU ENTERED YOUR PASSWORD ON A FAKE PAGE.\n\n" +
+                "WHAT THIS MEANS:\n" +
+                "• Your password can be stolen\n" +
+                "• Attackers can log into your services\n" +
+                "• They can reset accounts, steal data, or lock you out\n\n" +
+                "DO THIS NOW:\n" +
+                "1) Change password immediately\n" +
+                "2) Enable 2FA/MFA\n" +
+                "3) Report the phishing email\n" +
+                $"4) Only sign in via: {officialDomain}";
+        }
+    }
+
+    void AnimateHackedBigAlert()
+    {
+        if (!hacked || !hackedBigPanel) return;
+
+        // Shake + pulse
+        var rt = hackedBigPanel;
+        float shakeX = Mathf.Sin(Time.time * hackedShakeSpeed) * hackedShakeAmount;
+        float shakeY = Mathf.Cos(Time.time * hackedShakeSpeed * 1.2f) * hackedShakeAmount;
+        rt.anchoredPosition = new Vector2(shakeX, shakeY);
+
+        float p = 1f + 0.03f * (0.5f + 0.5f * Mathf.Sin(Time.time * hackedPulseSpeed * 6f));
+        rt.localScale = Vector3.one * p;
+
+        // Alternating siren bars
+        if (hackedSirenLeft && hackedSirenRight)
+        {
+            float s = 0.5f + 0.5f * Mathf.Sin(Time.time * 10f);
+            var leftImg = hackedSirenLeft.GetComponent<Image>();
+            var rightImg = hackedSirenRight.GetComponent<Image>();
+            if (leftImg) leftImg.color = Color.Lerp(new Color32(220, 30, 30, 160), new Color32(255, 210, 60, 220), s);
+            if (rightImg) rightImg.color = Color.Lerp(new Color32(255, 210, 60, 220), new Color32(220, 30, 30, 160), s);
+        }
+
+        // make overlay intensity stronger too
+        if (hackedOverlayImage)
+        {
+            float a = 0.45f + 0.35f * (0.5f + 0.5f * Mathf.Sin(Time.time * 8f));
+            var c = hackedFlashColor;
+            c.a = Mathf.Clamp01(a);
+            hackedOverlayImage.color = c;
+        }
+    }
+
+    // =========================
+    // Hint system
+    // =========================
+    void RefreshHintState()
+    {
+        if (!Application.isPlaying) return;
+
+        if (state == AppState.Home) currentHint = HintTarget.HomeSignIn;
+        else if (state == AppState.Dashboard) currentHint = HintTarget.DashInbox;
+        else if (state == AppState.Mail) currentHint = HintTarget.MailSafeAction;
+        else if (state == AppState.BrowserPhishVerify) currentHint = HintTarget.BrowserSubmit;
+        else currentHint = HintTarget.None;
+    }
+
+    void PulseHintGlows()
+    {
+        float a = 0.25f + 0.75f * Mathf.PingPong(Time.time * hintPulseSpeed, 1f);
+
+        SetHintAlpha(btnHomeSignIn, currentHint == HintTarget.HomeSignIn ? a : 0f);
+        SetHintAlpha(btnDashOpenInbox, currentHint == HintTarget.DashInbox ? a : 0f);
+
+        SetHintAlpha(btnMailReport, currentHint == HintTarget.MailSafeAction ? a : 0f);
+        SetHintAlpha(btnMailDelete, currentHint == HintTarget.MailSafeAction ? a : 0f);
+        SetHintAlpha(btnMailVerify, currentHint == HintTarget.MailSafeAction ? 0.10f : 0f);
+
+        SetHintAlpha(btnBrowserSubmit, currentHint == HintTarget.BrowserSubmit ? a : 0f);
     }
 
     void AnimateSuspiciousDomainFlash()
     {
-        // This only visually affects the Verify button label (link-like)
-        if (!btnVerifyButton) return;
+        if (!btnMailVerify) return;
 
-        var label = btnVerifyButton.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
+        var label = btnMailVerify.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
         if (!label) return;
 
-        // Flash just the typosquat part
         float t = 0.5f + 0.5f * Mathf.Sin(Time.time * domainFlashSpeed);
         var flash = Color.Lerp(colWarn, colDanger, t);
         string flashHex = ColorUtility.ToHtmlStringRGB(flash);
@@ -993,212 +1444,6 @@ public class PhishingMissionMonitorUI : MonoBehaviour
 
         label.richText = true;
         label.text = $"VERIFY NOW  →  {domain}";
-    }
-
-    // =========================
-    // Password UI
-    // =========================
-    void OnPasswordChanged(string value)
-    {
-        if (!strengthLabel || !strengthBarFill || !strengthHint) return;
-
-        var grade = GradePassword(value);
-        var (score, label, color) = PasswordToUI(grade, value);
-
-        strengthLabel.text = $"Strength: {label}";
-        strengthLabel.color = (grade == PasswordGrade.Strong) ? colGood : (grade == PasswordGrade.Medium ? colWarn : colDanger);
-
-        float w = Mathf.Clamp01(score / 100f);
-        strengthBarFill.rectTransform.anchorMax = new Vector2(w, 1);
-        strengthBarFill.color = color;
-
-        strengthHint.text =
-            grade == PasswordGrade.Weak ? "Tip: Avoid common words. Add length + symbols." :
-            grade == PasswordGrade.Medium ? "Tip: Add more length or a symbol for better safety." :
-            grade == PasswordGrade.Strong ? "Nice! Strong password reduces hacking risk." :
-            "Tip: 12+ chars, mix UPPER/lower/numbers/symbols";
-    }
-
-    PasswordGrade GradePassword(string p)
-    {
-        if (string.IsNullOrWhiteSpace(p)) return PasswordGrade.Unknown;
-
-        int score = 0;
-        if (p.Length >= 8) score += 20;
-        if (p.Length >= 12) score += 25;
-        if (p.Length >= 16) score += 10;
-
-        if (Regex.IsMatch(p, "[a-z]")) score += 10;
-        if (Regex.IsMatch(p, "[A-Z]")) score += 10;
-        if (Regex.IsMatch(p, "[0-9]")) score += 10;
-        if (Regex.IsMatch(p, @"[^a-zA-Z0-9]")) score += 15;
-
-        if (Regex.IsMatch(p.ToLower(), @"password|qwerty|1234|admin|letmein|kenya|nairobi")) score -= 30;
-        if (Regex.IsMatch(p, @"(.)\1\1")) score -= 10;
-        if (Regex.IsMatch(p, @"12345|67890")) score -= 10;
-
-        score = Mathf.Clamp(score, 0, 100);
-
-        if (score < 45) return PasswordGrade.Weak;
-        if (score < 75) return PasswordGrade.Medium;
-        return PasswordGrade.Strong;
-    }
-
-    (int score, string label, Color color) PasswordToUI(PasswordGrade grade, string p)
-    {
-        int score = 0;
-        if (!string.IsNullOrEmpty(p))
-        {
-            score = Mathf.Clamp(p.Length * 6, 0, 100);
-            if (Regex.IsMatch(p, "[A-Z]")) score += 10;
-            if (Regex.IsMatch(p, "[0-9]")) score += 10;
-            if (Regex.IsMatch(p, @"[^a-zA-Z0-9]")) score += 10;
-            score = Mathf.Clamp(score, 0, 100);
-        }
-
-        return grade switch
-        {
-            PasswordGrade.Weak => (Mathf.Min(score, 40), "Weak", colDanger),
-            PasswordGrade.Medium => (Mathf.Clamp(score, 45, 75), "Medium", colWarn),
-            PasswordGrade.Strong => (Mathf.Clamp(score, 75, 100), "Strong", colGood),
-            _ => (0, "—", colMuted),
-        };
-    }
-
-    // =========================
-    // Buttons + hints wiring
-    // =========================
-    void CacheAndWire()
-    {
-        // Account buttons
-        btnContinue = FindButton(accountWindow, "ContinueBtn");
-        btnReset = FindButton(accountWindow, "ResetBtn");
-
-        // Dashboard icon buttons
-        btnEmailIcon = FindButton(dashboardWindow, "EmailIcon");
-        btnProfileIcon = FindButton(dashboardWindow, "ProfileIcon");
-        btnTipsIcon = FindButton(dashboardWindow, "TipsIcon");
-
-        // Mail buttons
-        btnMailBack = FindButton(mailWindow, "BackBtn");
-        btnReport = FindButton(mailWindow, "ReportBtn");
-        btnDelete = FindButton(mailWindow, "DeleteBtn");
-        btnVerifyButton = FindButton(mailWindow, "VerifyDomainBtn");
-
-        // Browser buttons
-        btnBrowserBack = FindButton(browserWindow, "BackBtn");
-        btnBrowserSubmit = FindButton(browserWindow, "SubmitBtn");
-
-        // Result buttons
-        btnResultRetry = FindButton(resultWindow, "RetryBtn");
-        btnResultClose = FindButton(resultWindow, "CloseBtn");
-
-        // Wire safely
-        Wire(btnContinue, OnClickContinue);
-
-        Wire(btnReset, () =>
-        {
-            if (usernameInput) usernameInput.text = "student@cyberverse.local";
-            if (passwordInput) passwordInput.text = "";
-            chosenUsername = "student@cyberverse.local";
-            chosenPassword = "";
-            chosenGrade = PasswordGrade.Unknown;
-
-            openedMailOnce = false;
-            clickedVerify = false;
-            submittedOnPhishPage = false;
-
-            ClearAccountError();
-            ClearBrowserError();
-
-            SwitchState(MissionState.CreateAccount);
-        });
-
-        Wire(btnEmailIcon, () =>
-        {
-            openedMailOnce = true;
-            SwitchState(MissionState.Mail);
-        });
-
-        Wire(btnProfileIcon, () => SwitchState(MissionState.CreateAccount));
-
-        Wire(btnTipsIcon, () =>
-        {
-            ShowOutcome("SECURITY TIPS", colPrimary,
-                "Checklist:\n\n• Check sender address\n• Inspect domain spelling\n• Beware urgency/threats\n• Never type password from email links\n• Use MFA + password manager\n• Report suspicious emails");
-            SwitchState(MissionState.Result);
-        });
-
-        Wire(btnMailBack, () => SwitchState(MissionState.Dashboard));
-
-        Wire(btnReport, () =>
-        {
-            ShowOutcome("SAFE ACTION", colGood,
-                "You reported the email. Great.\n\nLesson:\n• Reporting helps protect others\n• Verify through official channels, not email links.");
-            SwitchState(MissionState.Result);
-        });
-
-        Wire(btnDelete, () =>
-        {
-            ShowOutcome("SAFE ACTION", colGood,
-                "You deleted the suspicious email.\n\nLesson:\n• Deleting reduces risk\n• If unsure, contact IT using official contacts.");
-            SwitchState(MissionState.Result);
-        });
-
-        Wire(btnVerifyButton, OnClickVerify);
-        Wire(btnBrowserBack, () => SwitchState(MissionState.Mail));
-        Wire(btnBrowserSubmit, OnClickBrowserSubmit);
-
-        Wire(btnResultRetry, () =>
-        {
-            openedMailOnce = false;
-            clickedVerify = false;
-            submittedOnPhishPage = false;
-
-            if (passwordInput) passwordInput.text = "";
-            if (browserPassField) browserPassField.text = "";
-
-            chosenPassword = "";
-            chosenGrade = PasswordGrade.Unknown;
-
-            ClearAccountError();
-            ClearBrowserError();
-
-            SwitchState(MissionState.CreateAccount);
-        });
-
-        Wire(btnResultClose, () => SwitchState(MissionState.Dashboard));
-
-        // Hint outlines
-        hintOutlines.Clear();
-        RegisterHintOutline(btnContinue);
-        RegisterHintOutline(btnEmailIcon);
-        RegisterHintOutline(btnVerifyButton);
-        RegisterHintOutline(btnBrowserSubmit);
-
-        // Update dashboard welcome after wiring
-        UpdateDashboardWelcome();
-    }
-
-    void RefreshHintState()
-    {
-        if (!Application.isPlaying) return;
-
-        if (state == MissionState.CreateAccount) currentHint = HintTarget.Continue;
-        else if (state == MissionState.Dashboard) currentHint = openedMailOnce ? HintTarget.None : HintTarget.EmailIcon;
-        else if (state == MissionState.Mail) currentHint = HintTarget.VerifyButton;
-        else if (state == MissionState.Browser) currentHint = HintTarget.BrowserSubmit;
-        else currentHint = HintTarget.None;
-    }
-
-    void PulseHintGlows()
-    {
-        float a = 0.25f + 0.75f * Mathf.PingPong(Time.time * hintPulseSpeed, 1f);
-
-        SetHintAlpha(btnContinue, currentHint == HintTarget.Continue ? a : 0f);
-        SetHintAlpha(btnEmailIcon, currentHint == HintTarget.EmailIcon ? a : 0f);
-        SetHintAlpha(btnVerifyButton, currentHint == HintTarget.VerifyButton ? a : 0f);
-        SetHintAlpha(btnBrowserSubmit, currentHint == HintTarget.BrowserSubmit ? a : 0f);
     }
 
     void RegisterHintOutline(Button b)
@@ -1226,6 +1471,77 @@ public class PhishingMissionMonitorUI : MonoBehaviour
         var c = hintGlowColor;
         c.a = Mathf.Clamp01(alpha);
         o.effectColor = c;
+    }
+
+    // =========================
+    // Wiring
+    // =========================
+    void CacheAndWire()
+    {
+        btnHomeSignIn = FindButton(homeWindow, "SignInBtn");
+        btnHomeRegister = FindButton(homeWindow, "RegisterBtn");
+
+        btnDashOpenInbox = FindButton(dashboardWindow, "InboxBtn");
+        btnDashLogout = FindButton(dashboardWindow, "LogoutBtn");
+        btnDashBackHome = FindButton(dashboardWindow, "BackHomeBtn");
+
+        btnMailBack = FindButton(mailWindow, "BackBtn");
+        btnMailReport = FindButton(mailWindow, "ReportBtn");
+        btnMailDelete = FindButton(mailWindow, "DeleteBtn");
+        btnMailVerify = FindButton(mailWindow, "VerifyBtn");
+        btnMailOpenItem = FindButton(mailWindow, "OpenMailItemBtn");
+
+        btnBrowserBack = FindButton(browserWindow, "BackBtn");
+        btnBrowserSubmit = FindButton(browserWindow, "SubmitBtn");
+
+        btnResultRetry = FindButton(resultWindow, "RetryBtn");
+        btnResultClose = FindButton(resultWindow, "CloseBtn");
+
+        Wire(btnHomeSignIn, OpenOfficialLogin);
+        Wire(btnHomeRegister, OpenOfficialLogin);
+
+        Wire(btnDashOpenInbox, OpenInbox);
+        Wire(btnDashBackHome, () => SwitchState(AppState.Home));
+        Wire(btnDashLogout, Logout);
+
+        Wire(btnMailBack, () => SwitchState(AppState.Dashboard));
+        Wire(btnMailOpenItem, () => { });
+        Wire(btnMailReport, ReportEmail);
+        Wire(btnMailDelete, DeleteEmail);
+        Wire(btnMailVerify, ClickVerifyLink);
+
+        Wire(btnBrowserBack, () => SwitchState(AppState.Mail));
+        Wire(btnBrowserSubmit, OnBrowserSubmit);
+
+        Wire(btnResultRetry, () =>
+        {
+            clickedSuspiciousVerify = false;
+            submittedOnPhishPage = false;
+            reportedEmail = false;
+            deletedEmail = false;
+
+            hacked = false;
+            ApplyHackedUI();
+
+            if (browserPassField) browserPassField.text = "";
+            ClearBrowserError();
+
+            SwitchState(loggedIn ? AppState.Dashboard : AppState.Home);
+        });
+
+        Wire(btnResultClose, () => SwitchState(loggedIn ? AppState.Dashboard : AppState.Home));
+
+        hintOutlines.Clear();
+        RegisterHintOutline(btnHomeSignIn);
+        RegisterHintOutline(btnDashOpenInbox);
+        RegisterHintOutline(btnMailReport);
+        RegisterHintOutline(btnMailDelete);
+        RegisterHintOutline(btnMailVerify);
+        RegisterHintOutline(btnBrowserSubmit);
+
+        UpdateHome();
+        UpdateDashboard();
+        RefreshRewardHUD();
     }
 
     static void Wire(Button b, Action action)
@@ -1257,22 +1573,93 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     }
 
     // =========================
-    // Errors
+    // Result helpers (NOW includes "what you did wrong")
     // =========================
-    void SetAccountError(string msg)
+    void ShowOutcome(string title, Color titleColor, string body)
     {
-        if (!accountError) return;
-        accountError.text = msg;
-        accountError.gameObject.SetActive(true);
+        var bodyRT = resultWindow.Find("Body").GetComponent<RectTransform>();
+        var t = bodyRT.Find("OutcomeTitle").GetComponent<TMP_Text>();
+        var b = bodyRT.Find("OutcomeBody").GetComponent<TMP_Text>();
+
+        t.text = title;
+        t.color = titleColor;
+
+        string mistakes = BuildMistakeSummary();
+        string fixes = BuildFixSummary();
+
+        b.text =
+            body +
+            "\n\n----------------------------\n" +
+            "WHAT YOU DID WRONG:\n" + mistakes +
+            "\n\nWHAT YOU SHOULD DO NEXT TIME:\n" + fixes +
+            $"\n\nScore: {score} • Badge: {ComputeBadge(score)}";
+
+        b.color = colText;
     }
 
-    void ClearAccountError()
+    string BuildMistakeSummary()
     {
-        if (!accountError) return;
-        accountError.text = "";
-        accountError.gameObject.SetActive(false);
+        var lines = new List<string>();
+
+        if (clickedSuspiciousVerify)
+            lines.Add("• You clicked a verification link from an email (high risk).");
+
+        if (submittedOnPhishPage)
+            lines.Add("• You typed your password on a suspicious page.");
+
+        if (!reportedEmail && !deletedEmail && openedInbox)
+            lines.Add("• You did not report or delete the suspicious email.");
+
+        if (!openedInbox && loggedIn)
+            lines.Add("• You ignored the inbox security message.");
+
+        if (chosenGrade == PasswordGrade.Weak && submittedOnPhishPage)
+            lines.Add("• Your password was weak, increasing your risk.");
+
+        if (lines.Count == 0)
+            lines.Add("• No major mistakes detected (good job).");
+
+        return string.Join("\n", lines);
     }
 
+    string BuildFixSummary()
+    {
+        var lines = new List<string>
+        {
+            $"• Always type the official site yourself: {officialDomain}",
+            "• Never enter your password from an email link",
+            "• Check the domain carefully (typosquats like \"go-ke\" are traps)",
+            "• Report phishing emails (best) or delete them (good)",
+            "• Use strong passwords + enable 2FA/MFA"
+        };
+
+        return string.Join("\n", lines);
+    }
+
+    void ShowWindow(RectTransform w, bool show)
+    {
+        if (w) w.gameObject.SetActive(show);
+    }
+
+    // =========================
+    // Mail content
+    // =========================
+    string BuildMailBody()
+    {
+        return
+            "Hello Citizen,\n\n" +
+            "We detected unusual sign-in activity on your eCitizen account.\n" +
+            "To avoid suspension, verify your account within 30 minutes.\n\n" +
+            "Click the button above to verify.\n\n" +
+            "Regards,\n" +
+            "eCitizen Support Team\n\n" +
+            "—\n" +
+            "Training note: This message contains multiple phishing red flags.";
+    }
+
+    // =========================
+    // Browser errors
+    // =========================
     void SetBrowserError(string msg)
     {
         if (!browserError) return;
@@ -1288,12 +1675,45 @@ public class PhishingMissionMonitorUI : MonoBehaviour
     }
 
     // =========================
+    // Password grade
+    // =========================
+    PasswordGrade GradePassword(string p)
+    {
+        if (string.IsNullOrWhiteSpace(p)) return PasswordGrade.Unknown;
+
+        int s = 0;
+        if (p.Length >= 8) s += 20;
+        if (p.Length >= 12) s += 25;
+        if (p.Length >= 16) s += 10;
+
+        if (Regex.IsMatch(p, "[a-z]")) s += 10;
+        if (Regex.IsMatch(p, "[A-Z]")) s += 10;
+        if (Regex.IsMatch(p, "[0-9]")) s += 10;
+        if (Regex.IsMatch(p, @"[^a-zA-Z0-9]")) s += 15;
+
+        if (Regex.IsMatch(p.ToLower(), @"password|qwerty|1234|admin|letmein|kenya|nairobi|ecitizen")) s -= 30;
+        if (Regex.IsMatch(p, @"(.)\1\1")) s -= 10;
+        if (Regex.IsMatch(p, @"12345|67890")) s -= 10;
+
+        s = Mathf.Clamp(s, 0, 100);
+
+        if (s < 45) return PasswordGrade.Weak;
+        if (s < 75) return PasswordGrade.Medium;
+        return PasswordGrade.Strong;
+    }
+
+    // =========================
     // Unity basics
     // =========================
     void EnsureEventSystem()
     {
         if (FindFirstObjectByType<EventSystem>() != null) return;
+
+#if ENABLE_INPUT_SYSTEM
+        new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+#else
         new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+#endif
     }
 
     void EnsureUICamera()
@@ -1435,7 +1855,7 @@ public class PhishingMissionMonitorUI : MonoBehaviour
 
             var text = textGo.AddComponent<TextMeshProUGUI>();
             text.fontSize = fontSize;
-            text.color = new Color32(28, 30, 33, 255);
+            text.color = new Color32(24, 28, 33, 255);
             text.alignment = TextAlignmentOptions.MidlineLeft;
             text.enableWordWrapping = false;
 
@@ -1473,10 +1893,10 @@ public class PhishingMissionMonitorUI : MonoBehaviour
             AddSoftOutline(frame.gameObject, border, 2);
 
             var titleBar = Panel(frame, "TitleBar", new Color32(252, 252, 253, 255),
-                new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -54), new Vector2(0, 0));
+                new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -54), Vector2.zero);
 
             Image(titleBar, "BottomBorder", border,
-                new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1));
+                new Vector2(0, 0), new Vector2(1, 0), Vector2.zero, new Vector2(0, 1));
 
             Text(titleBar, "Title", title, 20, textColor,
                 new Vector2(0, 0), new Vector2(1, 1), new Vector2(16, 6), new Vector2(-70, -6),
@@ -1488,157 +1908,9 @@ public class PhishingMissionMonitorUI : MonoBehaviour
                 onClose);
 
             Panel(frame, "Body", new Color32(0, 0, 0, 0),
-                new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 0), new Vector2(0, -54));
+                new Vector2(0, 0), new Vector2(1, 1), Vector2.zero, new Vector2(0, -54));
 
             return frame;
-        }
-
-        public struct ScrollRefs { public RectTransform root; public RectTransform content; }
-
-        public static ScrollRefs ScrollView(Transform parent, string name,
-            Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)
-        {
-            var root = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Mask), typeof(ScrollRect));
-            root.transform.SetParent(parent, false);
-
-            var rt = root.GetComponent<RectTransform>();
-            rt.anchorMin = anchorMin;
-            rt.anchorMax = anchorMax;
-            rt.offsetMin = offsetMin;
-            rt.offsetMax = offsetMax;
-
-            root.GetComponent<Image>().color = Color.white;
-            var mask = root.GetComponent<Mask>();
-            mask.showMaskGraphic = false;
-
-            var contentGo = new GameObject("Content", typeof(RectTransform));
-            contentGo.transform.SetParent(root.transform, false);
-            var content = contentGo.GetComponent<RectTransform>();
-            content.anchorMin = new Vector2(0, 1);
-            content.anchorMax = new Vector2(1, 1);
-            content.pivot = new Vector2(0.5f, 1f);
-            content.offsetMin = new Vector2(18, -650);
-            content.offsetMax = new Vector2(-18, -18);
-
-            var fitter = contentGo.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            var layout = contentGo.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.childControlHeight = true;
-            layout.childControlWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.childForceExpandWidth = true;
-            layout.spacing = 14;
-
-            var scroll = root.GetComponent<ScrollRect>();
-            scroll.content = content;
-            scroll.horizontal = false;
-            scroll.vertical = true;
-
-            return new ScrollRefs { root = rt, content = content };
-        }
-
-        public static TMP_Text LayoutText(Transform parent, string name, string text, int fontSize, Color color, TextAlignmentOptions align)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(LayoutElement));
-            go.transform.SetParent(parent, false);
-
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0, 1);
-            rt.anchorMax = new Vector2(1, 1);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.sizeDelta = new Vector2(0, 10);
-
-            var tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.color = color;
-            tmp.alignment = align;
-            tmp.enableWordWrapping = true;
-            tmp.raycastTarget = false;
-
-            var le = go.GetComponent<LayoutElement>();
-            le.flexibleWidth = 1;
-            le.minHeight = 10;
-
-            return tmp;
-        }
-
-        public static GameObject LayoutButtonFullWidth(Transform parent, string name, string label,
-            int fontSize, Color bg, Color fg, float height, Action onClick)
-        {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            go.transform.SetParent(parent, false);
-
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0, 1);
-            rt.anchorMax = new Vector2(1, 1);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.sizeDelta = new Vector2(0, height);
-
-            go.GetComponent<Image>().color = bg;
-
-            var le = go.GetComponent<LayoutElement>();
-            le.minHeight = height;
-            le.preferredHeight = height;
-            le.flexibleWidth = 1;
-
-            var btn = go.GetComponent<Button>();
-            btn.onClick.AddListener(() => onClick?.Invoke());
-
-            var text = new GameObject("Label", typeof(RectTransform));
-            text.transform.SetParent(go.transform, false);
-            var trt = text.GetComponent<RectTransform>();
-            trt.anchorMin = Vector2.zero;
-            trt.anchorMax = Vector2.one;
-            trt.offsetMin = new Vector2(14, 6);
-            trt.offsetMax = new Vector2(-14, -6);
-
-            var tmp = text.AddComponent<TextMeshProUGUI>();
-            tmp.text = label;
-            tmp.fontSize = fontSize;
-            tmp.color = fg;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.enableWordWrapping = true;
-            tmp.raycastTarget = false;
-            tmp.richText = true;
-
-            return go;
-        }
-
-        public static GameObject IconButton(Transform parent, string name,
-            string iconText, string title, string subtitle, Color iconBg, Action onClick)
-        {
-            var card = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            card.transform.SetParent(parent, false);
-            card.GetComponent<Image>().color = Color.white;
-
-            AddSoftOutline(card, new Color32(226, 230, 236, 255), 2);
-
-            var btn = card.GetComponent<Button>();
-            btn.onClick.AddListener(() => onClick?.Invoke());
-
-            var icon = Panel(card.transform, "Icon", iconBg,
-                new Vector2(0, 0.5f), new Vector2(0, 0.5f),
-                new Vector2(18, -32), new Vector2(82, 32));
-
-            var iconTxt = Text(icon, "IconText", iconText, 30, Color.white,
-                new Vector2(0, 0), new Vector2(1, 1),
-                new Vector2(0, 0), new Vector2(0, 0),
-                TextAlignmentOptions.Center);
-            iconTxt.raycastTarget = false;
-
-            Text(card.transform, "Title", title, 22, new Color32(28, 30, 33, 255),
-                new Vector2(0, 1), new Vector2(1, 1),
-                new Vector2(96, -18), new Vector2(-18, -58),
-                TextAlignmentOptions.TopLeft);
-
-            Text(card.transform, "Sub", subtitle, 16, new Color32(98, 104, 112, 255),
-                new Vector2(0, 1), new Vector2(1, 1),
-                new Vector2(96, -54), new Vector2(-18, -90),
-                TextAlignmentOptions.TopLeft);
-
-            return card;
         }
 
         public static void AddSoftOutline(GameObject go, Color color, int distance)
@@ -1707,6 +1979,13 @@ public class PhishingMissionMonitorUIEditor : Editor
         {
             t.Rebuild();
         }
+
+        GUILayout.Space(6);
+        EditorGUILayout.HelpBox(
+            "Flow: Home -> Sign in (official) -> Dashboard -> Inbox -> Report/Delete or click Verify.\n" +
+            "Rewards: Report/Delete gives points. Clicking link and typing password triggers BIG red hacked alert.\n" +
+            "End screen shows: WHAT YOU DID WRONG + WHAT TO DO NEXT.",
+            MessageType.Info);
     }
 }
 #endif
